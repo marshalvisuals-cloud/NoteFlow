@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { Note, ViewMode, AppLanguage, AppFont, translations, Translations } from './types';
-
+import { Note, ViewMode, AppLanguage, AppFont, translations, Translations, Tag } from './types';
 import { VoiceRecording, InlineImage } from './types';
 
 interface AppContextType {
@@ -12,6 +11,7 @@ interface AppContextType {
   appLanguage: AppLanguage;
   isRTL: boolean;
   t: Translations;
+  tags: Tag[];
   setViewMode: (mode: ViewMode) => void;
   setSearchQuery: (query: string) => void;
   setSelectedTag: (tag: string) => void;
@@ -32,6 +32,9 @@ interface AppContextType {
   addInlineImage: (image: InlineImage) => void;
   updateInlineImage: (id: string, updates: Partial<InlineImage>) => void;
   removeInlineImage: (id: string) => void;
+  addTag: (name: string, color: string) => void;
+  deleteTag: (id: string) => void;
+  updateTag: (id: string, updates: Partial<Tag>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -202,6 +205,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState('all');
   const [appLanguage, setAppLanguageState] = useState<AppLanguage>('fa');
+  const [tags, setTags] = useState<Tag[]>([
+    { id: '1', name: 'کاری', color: '#a78bfa' },
+    { id: '2', name: 'شخصی', color: '#fbbf24' },
+    { id: '3', name: 'مطالعه', color: '#34d399' },
+    { id: '4', name: 'طراحی', color: '#f472b6' },
+    { id: '5', name: 'سلامتی', color: '#fb923c' },
+  ]);
 
   const t = translations[appLanguage];
   const isRTL = appLanguage === 'fa';
@@ -331,6 +341,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [currentNote, updateNote]);
 
+  const addTag = useCallback((name: string, color: string) => {
+    const newTag: Tag = {
+      id: Date.now().toString(),
+      name,
+      color,
+    };
+    setTags(prev => [...prev, newTag]);
+  }, []);
+
+  const deleteTag = useCallback((id: string) => {
+    setTags(prev => prev.filter(tag => tag.id !== id));
+  }, []);
+
+  const updateTag = useCallback((id: string, updates: Partial<Tag>) => {
+    setTags(prev => prev.map(tag =>
+      tag.id === id ? { ...tag, ...updates } : tag
+    ));
+  }, []);
+
   return (
     <AppContext.Provider value={{
       notes,
@@ -341,6 +370,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       appLanguage,
       isRTL,
       t,
+      tags,
       setViewMode,
       setSearchQuery,
       setSelectedTag,
@@ -361,6 +391,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addInlineImage,
       updateInlineImage,
       removeInlineImage,
+      addTag,
+      deleteTag,
+      updateTag,
     }}>
       {children}
     </AppContext.Provider>

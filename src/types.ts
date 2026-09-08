@@ -144,6 +144,17 @@ export interface Translations {
   daysAgo: string;
   notes: string;
   search: string;
+  // Tag Management
+  manageTags: string;
+  addTag: string;
+  deleteTag: string;
+  renameTag: string;
+  newTagName: string;
+  tagName: string;
+  tagColor: string;
+  confirmDeleteTag: string;
+  save: string;
+  edit: string;
 }
 
 export const translations: Record<AppLanguage, Translations> = {
@@ -211,6 +222,16 @@ export const translations: Record<AppLanguage, Translations> = {
     daysAgo: 'd ago',
     notes: 'Notes',
     search: 'Search',
+    manageTags: 'Manage Tags',
+    addTag: 'Add Tag',
+    deleteTag: 'Delete Tag',
+    renameTag: 'Rename Tag',
+    newTagName: 'New tag name',
+    tagName: 'Tag name',
+    tagColor: 'Tag color',
+    confirmDeleteTag: 'Are you sure you want to delete this tag?',
+    save: 'Save',
+    edit: 'Edit',
   },
   fa: {
     appName: 'نوت‌فلو',
@@ -276,6 +297,16 @@ export const translations: Record<AppLanguage, Translations> = {
     daysAgo: 'روز پیش',
     notes: 'یادداشت‌ها',
     search: 'جستجو',
+    manageTags: 'مدیریت برچسب‌ها',
+    addTag: 'افزودن برچسب',
+    deleteTag: 'حذف برچسب',
+    renameTag: 'تغییر نام برچسب',
+    newTagName: 'نام برچسب جدید',
+    tagName: 'نام برچسب',
+    tagColor: 'رنگ برچسب',
+    confirmDeleteTag: 'آیا از حذف این برچسب مطمئن هستید؟',
+    save: 'ذخیره',
+    edit: 'ویرایش',
   },
 };
 
@@ -286,4 +317,43 @@ export interface ExportFormat {
   type: 'image' | 'pdf' | 'word' | 'pages';
   label: string;
   icon: string;
+}
+
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface AppContextType {
+  notes: Note[];
+  currentNote: Note | null;
+  viewMode: ViewMode;
+  searchQuery: string;
+  selectedTag: string;
+  appLanguage: AppLanguage;
+  t: Translations;
+  isRTL: boolean;
+  tags: Tag[];
+  setViewMode: (mode: ViewMode) => void;
+  openNote: (note: Note) => void;
+  closeNote: () => void;
+  updateNote: (id: string, updates: Partial<Note>) => void;
+  deleteNote: (id: string) => void;
+  duplicateNote: (note: Note) => void;
+  togglePin: (id: string) => void;
+  toggleLock: (id: string) => void;
+  setSearchQuery: (query: string) => void;
+  setActiveTag: (tag: string) => void;
+  addNote: () => void;
+  toggleRTL: () => void;
+  setAppLanguage: (lang: AppLanguage) => void;
+  addVoiceRecording: (recording: VoiceRecording) => void;
+  addInlineImage: (image: InlineImage) => void;
+  updateInlineImage: (id: string, updates: Partial<InlineImage>) => void;
+  removeInlineImage: (id: string) => void;
+  setFontFamily: (font: AppFont) => void;
+  addTag: (name: string, color: string) => void;
+  deleteTag: (id: string) => void;
+  updateTag: (id: string, updates: Partial<Tag>) => void;
 }

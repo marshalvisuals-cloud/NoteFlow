@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../store';
 import { Note } from '../types';
+import TagManager from './TagManager';
 
 const Dashboard: React.FC = () => {
   const {
@@ -12,6 +13,7 @@ const Dashboard: React.FC = () => {
     appLanguage,
     isRTL,
     t,
+    tags,
     createNote,
     openNote,
     togglePin,
@@ -22,14 +24,11 @@ const Dashboard: React.FC = () => {
 
   const [contextMenu, setContextMenu] = useState<{ noteId: string; x: number; y: number } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [showTagManager, setShowTagManager] = useState(false);
 
-  const tags = [
-    { id: 'all', label: t.allNotes, icon: '📋' },
-    { id: appLanguage === 'fa' ? 'کاری' : 'Work', label: t.tagWork, icon: '💼' },
-    { id: appLanguage === 'fa' ? 'شخصی' : 'Personal', label: t.tagPersonal, icon: '🏠' },
-    { id: appLanguage === 'fa' ? 'مطالعه' : 'Study', label: t.tagStudy, icon: '📚' },
-    { id: appLanguage === 'fa' ? 'طراحی' : 'Design', label: t.tagDesign, icon: '🎨' },
-    { id: appLanguage === 'fa' ? 'سلامتی' : 'Health', label: t.tagHealth, icon: '💪' },
+  const tagFilters = [
+    { id: 'all', label: t.allNotes, icon: '📋', color: '#6b7280' },
+    ...tags.map(tag => ({ id: tag.name, label: tag.name, icon: '🏷️', color: tag.color })),
   ];
 
   const filteredNotes = notes.filter(note => {
@@ -167,7 +166,7 @@ const Dashboard: React.FC = () => {
 
       {/* Tags Filter */}
       <div className="flex flex-wrap gap-2">
-        {tags.map(tag => (
+        {tagFilters.map(tag => (
           <button
             key={tag.id}
             onClick={() => setSelectedTag(tag.id)}
@@ -181,6 +180,15 @@ const Dashboard: React.FC = () => {
             <span>{tag.label}</span>
           </button>
         ))}
+        
+        {/* Manage Tags Button */}
+        <button
+          onClick={() => setShowTagManager(true)}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 font-fontBody bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-violet-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+          title={t.manageTags}
+        >
+          <span>⚙️</span>
+        </button>
       </div>
 
       {/* Pinned Notes */}
@@ -297,6 +305,11 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Tag Manager Modal */}
+      {showTagManager && (
+        <TagManager onClose={() => setShowTagManager(false)} />
       )}
     </div>
   );
