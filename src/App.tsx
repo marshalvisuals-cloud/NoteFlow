@@ -5,16 +5,27 @@ import Editor from './components/Editor';
 import DrawingCanvas from './components/DrawingCanvas';
 
 function AppContent() {
-  const { viewMode } = useApp();
+  const { viewMode, isRTL, theme } = useApp();
 
-  switch (viewMode) {
-    case 'editor':
-      return <Editor />;
-    case 'drawing':
-      return <DrawingCanvas />;
-    default:
-      return <Dashboard />;
-  }
+  React.useEffect(() => {
+    // Set initial direction
+    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+    document.documentElement.lang = isRTL ? 'fa' : 'en';
+    if (!isRTL) {
+      document.documentElement.classList.add('ltr');
+    }
+    // Set initial theme
+    document.documentElement.classList.add(theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, []);
+
+  return (
+    <div className="h-screen w-screen overflow-hidden bg-gray-50 dark:bg-gray-950">
+      {viewMode === 'dashboard' && <Dashboard />}
+      {viewMode === 'editor' && <Editor />}
+      {viewMode === 'drawing' && <DrawingCanvas />}
+    </div>
+  );
 }
 
 export default function App() {

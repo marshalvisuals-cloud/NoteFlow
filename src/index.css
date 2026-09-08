@@ -1,6 +1,128 @@
 @import "tailwindcss";
 
-/* Custom scrollbar */
+/* Font Definitions */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Font utility classes */
+.font-vazir {
+  font-family: 'Vazirmatn', 'B Nazanin', 'Noto Naskh Arabic', sans-serif !important;
+}
+
+.font-nazanin {
+  font-family: 'Noto Naskh Arabic', 'B Nazanin', 'Vazirmatn', sans-serif !important;
+}
+
+.font-calibri {
+  font-family: 'Calibri', 'Vazirmatn', 'Segoe UI', sans-serif !important;
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Vazirmatn', 'B Nazanin', 'Calibri', 'Noto Naskh Arabic', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* RTL specific styles */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] textarea {
+  text-align: right;
+}
+
+[dir="ltr"] {
+  text-align: left;
+}
+
+/* Dark mode */
+html.dark body {
+  background-color: #0f0f1a;
+  color: #e0e0e0;
+}
+
+html.light body {
+  background-color: #f8f9fa;
+  color: #1a1a2e;
+}
+
+/* Note card styles */
+.note-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.note-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Toolbar button */
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: #6b7280;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.toolbar-btn:hover {
+  background-color: #f3f4f6;
+  color: #7c3aed;
+}
+
+html.dark .toolbar-btn:hover {
+  background-color: #374151;
+  color: #a78bfa;
+}
+
+/* Scrollbar styles */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -19,60 +141,72 @@
   background: #9ca3af;
 }
 
-.dark ::-webkit-scrollbar-thumb {
+html.dark ::-webkit-scrollbar-thumb {
   background: #4b5563;
 }
 
-/* Content editable placeholder */
-[contenteditable]:empty:before {
-  content: "Start writing your note...";
-  color: #9ca3af;
-  pointer-events: none;
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 
-/* Smooth transitions */
-* {
-  -webkit-tap-highlight-color: transparent;
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Masonry columns */
-.columns-1 > * {
-  break-inside: avoid;
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
-/* Range input styling */
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 6px;
-  border-radius: 3px;
-  background: #e5e7eb;
+/* ContentEditable styles */
+[contenteditable] {
   outline: none;
+  min-height: 200px;
 }
 
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #6366f1;
-  cursor: pointer;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+[contenteditable]:empty:before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  font-style: italic;
 }
 
-input[type="range"]::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #6366f1;
-  cursor: pointer;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+[contenteditable] blockquote {
+  border-left: 4px solid #7c3aed;
+  padding-left: 16px;
+  margin: 12px 0;
+  color: #6b7280;
+  font-style: italic;
 }
 
-/* Line clamp utilities */
+[dir="rtl"] [contenteditable] blockquote {
+  border-left: none;
+  border-right: 4px solid #7c3aed;
+  padding-left: 0;
+  padding-right: 16px;
+}
+
+[contenteditable] h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  line-height: 1.3;
+}
+
+[contenteditable] h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 14px 0 6px;
+  line-height: 1.4;
+}
+
+[contenteditable] h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 12px 0 4px;
+  line-height: 1.4;
+}
+
+/* Line clamp */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -87,75 +221,84 @@ input[type="range"]::-moz-range-thumb {
   overflow: hidden;
 }
 
-/* Animation for recording */
-@keyframes pulse-recording {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-pulse-recording {
-  animation: pulse-recording 1s ease-in-out infinite;
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Glass morphism effect */
-.glass {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
 }
 
-.dark .glass {
-  background: rgba(17, 24, 39, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
 }
 
-/* Prose styles for editor */
-.prose h1 {
-  font-size: 2em;
-  font-weight: 700;
-  margin-bottom: 0.5em;
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
 }
 
-.prose h2 {
-  font-size: 1.5em;
-  font-weight: 600;
-  margin-bottom: 0.5em;
+/* Touch improvements */
+@media (pointer: coarse) {
+  .toolbar-btn {
+    width: 40px;
+    height: 40px;
+  }
 }
 
-.prose h3 {
-  font-size: 1.25em;
-  font-weight: 600;
-  margin-bottom: 0.5em;
-}
-
-.prose blockquote {
-  border-left: 4px solid #6366f1;
-  padding-left: 1em;
-  margin: 1em 0;
-  font-style: italic;
-  color: #6b7280;
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }
 
 /* Selection highlight */
 ::selection {
-  background-color: rgba(99, 102, 241, 0.2);
+  background-color: rgba(124, 58, 237, 0.2);
+  color: inherit;
 }
 
 /* Focus styles */
-*:focus-visible {
-  outline: 2px solid #6366f1;
-  outline-offset: 2px;
-  border-radius: 4px;
+input:focus, button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
 }
 
-/* Prevent text selection on buttons */
-button {
-  user-select: none;
-  -webkit-user-select: none;
+/* Range input styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: #e5e7eb;
+  outline: none;
 }
 
-/* Canvas cursor styles */
-canvas {
-  touch-action: none;
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #7c3aed;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(124, 58, 237, 0.3);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #7c3aed;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(124, 58, 237, 0.3);
 }

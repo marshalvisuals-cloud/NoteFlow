@@ -1,194 +1,233 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../store';
-import { ChecklistItem } from '../types';
+import VoiceRecorder, { VoicePlayer } from './VoiceRecorder';
+import ImageBlock, { ImageUploader } from './ImageBlock';
+import ExportMenu from './ExportMenu';
+import { InlineImage } from '../types';
 
 export default function Editor() {
-  const { currentNote, setCurrentNote, setViewMode, updateNote, deleteNote, togglePin } = useApp();
-  const [title, setTitle] = useState(currentNote?.title || '');
-  const [content, setContent] = useState(currentNote?.content || '');
-  const [showToolbar, setShowToolbar] = useState(false);
+  const {
+    currentNote, updateNote, setViewMode, isRTL, toggleRTL,
+    addVoiceRecording, addInlineImage, updateInlineImage, removeInlineImage,
+    setFontFamily
+  } = useApp();
+
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
-  const [showHighlightMenu, setShowHighlightMenu] = useState(false);
-  const [selectedText, setSelectedText] = useState('');
-  const [highlightColor, setHighlightColor] = useState('#fef08a');
-  const [isBold, setIsBold] = useState(false);
-  const [isItalic, setIsItalic] = useState(false);
-  const [isUnderline, setIsUnderline] = useState(false);
-  const [heading, setHeading] = useState('p');
-  const [showChecklist, setShowChecklist] = useState(false);
-  const [checklist, setChecklist] = useState<ChecklistItem[]>(currentNote?.checklist || []);
-  const [newCheckItem, setNewCheckItem] = useState('');
-  const [showVoiceMemo, setShowVoiceMemo] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const [showImageUpload, setShowImageUpload] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [showFontMenu, setShowFontMenu] = useState(false);
+  const [showHighlightPicker, setShowHighlightPicker] = useState(false);
+  const [highlightPos, setHighlightPos] = useState({ x: 0, y: 0 });
+  const editorRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (currentNote) {
-      setTitle(currentNote.title);
-      setContent(currentNote.content);
-      setChecklist(currentNote.checklist || []);
-    }
-  }, [currentNote]);
+  if (!currentNote) return null;
 
-  const handleSave = () => {
-    if (currentNote) {
-      updateNote(currentNote.id, { title, content, checklist });
+  const note = currentNote;
+  const noteRTL = note.isRTL;
+
+  const getFontClass = (font: string) => {
+    switch (font) {
+      case 'vazirmatn': return 'font-vazir';
+      case 'nazanin': return 'font-nazanin';
+      case 'calibri': return 'font-calibri';
+      default: return 'font-vazir';
     }
   };
 
-  const handleBack = () => {
-    handleSave();
-    setCurrentNote(null);
-    setViewMode('dashboard');
+  const getFontFamilyCSS = (font: string) => {
+    switch (font) {
+      case 'vazirmatn': return "'Vazirmatn', 'B Nazanin', sans-serif";
+      case 'nazanin': return "'Noto Naskh Arabic', 'B Nazanin', 'Vazirmatn', sans-serif";
+      case 'calibri': return "'Calibri', 'Vazirmatn', 'Segoe UI', sans-serif";
+      default: return "'Vazirmatn', sans-serif";
+    }
   };
 
-  const handleTextSelect = () => {
+  // Handle text selection for highlight
+  const handleMouseUp = () => {
     const selection = window.getSelection();
-    if (selection && selection.toString().length > 0) {
-      setSelectedText(selection.toString());
-      setShowHighlightMenu(true);
-    } else {
-      setShowHighlightMenu(false);
+    if (selection && selection.toString().trim().length > 0) {
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      setHighlightPos({ x: rect.left + rect.width / 2, y: rect.top - 10 });
+      setShowHighlightPicker(true);
     }
   };
 
   const applyHighlight = (color: string) => {
-    setHighlightColor(color);
-    setShowHighlightMenu(false);
-  };
-
-  const toggleCheckItem = (id: string) => {
-    setChecklist(prev => prev.map(item =>
-      item.id === id ? { ...item, checked: !item.checked } : item
-    ));
-  };
-
-  const addCheckItem = () => {
-    if (newCheckItem.trim()) {
-      setChecklist(prev => [...prev, { id: Date.now().toString(), text: newCheckItem, checked: false }]);
-      setNewCheckItem('');
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const span = document.createElement('span');
+      span.style.backgroundColor = color;
+      span.style.padding = '0 4px';
+      span.style.borderRadius = '3px';
+      range.surroundContents(span);
+      setShowHighlightPicker(false);
     }
   };
 
-  const removeCheckItem = (id: string) => {
-    setChecklist(prev => prev.filter(item => item.id !== id));
+  // Format commands
+  const execCommand = (command: string, value?: string) => {
+    document.execCommand(command, false, value);
+    editorRef.current?.focus();
   };
 
-  const startRecording = () => {
-    setIsRecording(true);
-    setRecordingTime(0);
-    timerRef.current = setInterval(() => {
-      setRecordingTime(prev => prev + 1);
-    }, 1000);
+  // Content update
+  const handleContentChange = () => {
+    if (editorRef.current) {
+      updateNote(note.id, { content: editorRef.current.innerHTML });
+    }
   };
 
-  const stopRecording = () => {
-    setIsRecording(false);
-    if (timerRef.current) clearInterval(timerRef.current);
-    setShowVoiceMemo(true);
+  // Set initial content
+  useEffect(() => {
+    if (editorRef.current && note.content && editorRef.current.innerHTML !== note.content) {
+      editorRef.current.innerHTML = note.content;
+    }
+  }, [note.id]);
+
+  // Handle voice recording completion
+  const handleVoiceRecordingComplete = (recording: any) => {
+    addVoiceRecording(note.id, recording);
+    setShowVoiceRecorder(false);
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  // Handle image insertion
+  const handleImageSelected = (image: InlineImage) => {
+    addInlineImage(note.id, image);
   };
 
-  const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6'];
-  const highlightColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fde68a', '#ddd6fe'];
+  // Toggle note RTL
+  const toggleNoteRTL = () => {
+    updateNote(note.id, { isRTL: !note.isRTL });
+  };
 
-  if (!currentNote) return null;
+  const formatDate = (date: Date) => {
+    if (noteRTL) {
+      return new Date(date).toLocaleDateString('fa-IR', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      });
+    }
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    });
+  };
+
+  const noteColors = [
+    '#ffffff', '#fef3e2', '#e8f4fd', '#f3e8ff', '#e8f5e9',
+    '#fce4ec', '#fff3e0', '#f0f4ff'
+  ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
-      {/* Top Bar */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-700/50">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleBack}
-              className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-              <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div className="flex items-center gap-2">
-              {currentNote.tags.map(tag => (
-                <span key={tag} className="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
+    <div
+      className="h-full flex flex-col"
+      dir={noteRTL ? 'rtl' : 'ltr'}
+      style={{ backgroundColor: note.color + '15' }}
+    >
+      {/* Top Toolbar */}
+      <header className="sticky top-0 z-40 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 px-4 py-2">
+        <div className="flex items-center justify-between max-w-5xl mx-auto">
+          {/* Back button */}
+          <button
+            onClick={() => setViewMode('dashboard')}
+            className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          >
+            <i className={`fas ${noteRTL ? 'fa-arrow-right' : 'fa-arrow-left'}`}></i>
+          </button>
 
+          {/* Center actions */}
           <div className="flex items-center gap-2">
-            {/* Color picker */}
-            <div className="relative group">
-              <button className="w-8 h-8 rounded-lg border-2 border-gray-200 dark:border-gray-700" style={{ backgroundColor: currentNote.color }} />
-              <div className="absolute right-0 top-10 hidden group-hover:flex flex-wrap w-36 p-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 gap-1.5">
-                {colors.map(color => (
-                  <button
-                    key={color}
-                    onClick={() => updateNote(currentNote.id, { color })}
-                    className="w-7 h-7 rounded-full border-2 border-white dark:border-gray-600 shadow-sm hover:scale-110 transition-transform"
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Lock button */}
+            {/* RTL Toggle */}
             <button
-              onClick={() => updateNote(currentNote.id, { locked: !currentNote.locked })}
-              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
-                currentNote.locked ? 'bg-red-100 dark:bg-red-900/30 text-red-600' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              onClick={toggleNoteRTL}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                noteRTL
+                  ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
               }`}
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                {currentNote.locked ? (
-                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
-                ) : (
-                  <path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z" />
-                )}
-              </svg>
+              {noteRTL ? 'فا' : 'EN'}
+            </button>
+
+            {/* Font selector */}
+            <div className="relative">
+              <button
+                onClick={() => setShowFontMenu(!showFontMenu)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                <i className="fas fa-font ml-1"></i>
+                {note.fontFamily === 'vazirmatn' ? 'وزیر' :
+                 note.fontFamily === 'nazanin' ? 'نازنین' : 'Calibri'}
+              </button>
+              {showFontMenu && (
+                <div className={`absolute top-full mt-1 ${noteRTL ? 'right-0' : 'left-0'} bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-1 min-w-[150px] z-50`}>
+                  {[
+                    { id: 'vazirmatn', label: 'وزیر متن (Vazirmatn)', labelEn: 'Vazirmatn' },
+                    { id: 'nazanin', label: 'بی نازنین (Nazanin)', labelEn: 'Nazanin' },
+                    { id: 'calibri', label: 'کالیبری (Calibri)', labelEn: 'Calibri' },
+                  ].map(font => (
+                    <button
+                      key={font.id}
+                      onClick={() => { setFontFamily(font.id); updateNote(note.id, { fontFamily: font.id }); setShowFontMenu(false); }}
+                      className={`w-full px-4 py-2.5 text-sm text-right hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between ${
+                        note.fontFamily === font.id ? 'text-violet-600 dark:text-violet-400' : 'text-gray-600 dark:text-gray-300'
+                      }`}
+                    >
+                      <span>{noteRTL ? font.label : font.labelEn}</span>
+                      {note.fontFamily === font.id && <i className="fas fa-check text-xs"></i>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Export */}
+            <button
+              onClick={() => setShowExport(true)}
+              className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              title={noteRTL ? 'خروجی' : 'Export'}
+            >
+              <i className="fas fa-file-export text-sm"></i>
             </button>
 
             {/* Options menu */}
             <div className="relative">
               <button
                 onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-                className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
-                </svg>
+                <i className="fas fa-ellipsis-v"></i>
               </button>
               {showOptionsMenu && (
-                <div className="absolute right-0 top-11 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 z-50">
-                  <button onClick={() => { togglePin(currentNote.id); setShowOptionsMenu(false); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
-                    {currentNote.pinned ? 'Unpin Note' : 'Pin to Top'}
+                <div className={`absolute top-full mt-1 ${noteRTL ? 'left-0' : 'right-0'} bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-1 min-w-[200px] z-50`}>
+                  <button onClick={() => { updateNote(note.id, { pinned: !note.pinned }); setShowOptionsMenu(false); }} className="w-full px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3 text-gray-600 dark:text-gray-300">
+                    <i className="fas fa-thumbtack text-amber-500 w-5"></i>
+                    {note.pinned ? (noteRTL ? 'برداشتن سنجاق' : 'Unpin') : (noteRTL ? 'سنجاق کردن' : 'Pin to top')}
                   </button>
-                  <button onClick={() => { setShowImageUpload(true); setShowOptionsMenu(false); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    Add Thumbnail
+                  <button onClick={() => { updateNote(note.id, { locked: !note.locked }); setShowOptionsMenu(false); }} className="w-full px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3 text-gray-600 dark:text-gray-300">
+                    <i className="fas fa-lock text-red-500 w-5"></i>
+                    {note.locked ? (noteRTL ? 'باز کردن قفل' : 'Unlock') : (noteRTL ? 'قفل کردن' : 'Lock note')}
                   </button>
-                  <button onClick={() => { setShowVoiceMemo(true); setShowOptionsMenu(false); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                    Add Voice Memo
-                  </button>
-                  <button onClick={() => { setViewMode('drawing'); setShowOptionsMenu(false); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                    Add Drawing Canvas
-                  </button>
-                  <hr className="my-1 border-gray-200 dark:border-gray-700" />
-                  <button onClick={() => { deleteNote(currentNote.id); setViewMode('dashboard'); }} className="w-full px-4 py-2.5 text-left text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center gap-3">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    Delete Note
+                  <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                  {/* Color picker */}
+                  <div className="px-4 py-2">
+                    <p className="text-xs text-gray-400 mb-2">{noteRTL ? 'رنگ یادداشت' : 'Note color'}</p>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {noteColors.map(color => (
+                        <button
+                          key={color}
+                          onClick={() => { updateNote(note.id, { color }); setShowOptionsMenu(false); }}
+                          className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${note.color === color ? 'border-violet-500 scale-110' : 'border-gray-200 dark:border-gray-600'}`}
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                  <button onClick={() => { updateNote(note.id, { content: '', title: noteRTL ? 'یادداشت جدید' : 'New Note' }); if (editorRef.current) editorRef.current.innerHTML = ''; setShowOptionsMenu(false); }} className="w-full px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3 text-gray-600 dark:text-gray-300">
+                    <i className="fas fa-copy text-blue-500 w-5"></i>
+                    {noteRTL ? 'پاک کردن محتوا' : 'Clear content'}
                   </button>
                 </div>
               )}
@@ -198,235 +237,213 @@ export default function Editor() {
       </header>
 
       {/* Editor Content */}
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
-        {/* Title */}
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Note title..."
-          className="w-full text-3xl font-bold text-gray-900 dark:text-white bg-transparent border-none outline-none placeholder-gray-300 dark:placeholder-gray-600 mb-2"
-        />
-        <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
-          Last edited {new Date(currentNote.updatedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-        </p>
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          {/* Title */}
+          <input
+            type="text"
+            value={note.title}
+            onChange={(e) => updateNote(note.id, { title: e.target.value })}
+            placeholder={noteRTL ? 'عنوان یادداشت...' : 'Note title...'}
+            className="w-full text-3xl font-bold bg-transparent border-none outline-none text-gray-800 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-600 mb-2"
+            style={{ fontFamily: getFontFamilyCSS(note.fontFamily), direction: noteRTL ? 'rtl' : 'ltr' }}
+          />
 
-        {/* Voice Memo */}
-        {showVoiceMemo && (
-          <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-800">
-            <div className="flex items-center gap-4">
-              {!isRecording ? (
-                <>
-                  <button
-                    onClick={startRecording}
-                    className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30"
-                  >
-                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd"/>
-                    </svg>
-                  </button>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Voice Memo</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Tap to record</p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={stopRecording}
-                    className="w-10 h-10 rounded-full bg-gray-800 dark:bg-white flex items-center justify-center animate-pulse"
-                  >
-                    <div className="w-4 h-4 rounded-sm bg-red-500" />
-                  </button>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-8 bg-white/50 dark:bg-gray-800/50 rounded-lg overflow-hidden flex items-center px-2">
-                        {/* Waveform visualization */}
-                        <div className="flex items-center gap-0.5 h-full">
-                          {Array.from({ length: 30 }).map((_, i) => (
-                            <div
-                              key={i}
-                              className="w-1 bg-red-400 rounded-full animate-pulse"
-                              style={{
-                                height: `${Math.random() * 60 + 20}%`,
-                                animationDelay: `${i * 50}ms`,
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <span className="text-sm font-mono text-red-600 dark:text-red-400">{formatTime(recordingTime)}</span>
-                    </div>
-                  </div>
-                </>
-              )}
-              <button onClick={() => setShowVoiceMemo(false)} className="text-gray-400 hover:text-gray-600">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/></svg>
-              </button>
+          {/* Date */}
+          <p className="text-sm text-gray-400 mb-6">
+            {noteRTL ? 'آخرین ویرایش: ' : 'Last edited: '}
+            {formatDate(note.updatedAt)}
+          </p>
+
+          {/* Inline Images */}
+          {note.inlineImages && note.inlineImages.length > 0 && (
+            <div className="mb-4">
+              {note.inlineImages.map(img => (
+                <ImageBlock
+                  key={img.id}
+                  image={img}
+                  onUpdate={(updates) => updateInlineImage(note.id, img.id, updates)}
+                  onRemove={() => removeInlineImage(note.id, img.id)}
+                />
+              ))}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Content Area */}
-        <div
-          ref={contentRef}
-          contentEditable
-          suppressContentEditableWarning
-          onMouseUp={handleTextSelect}
-          onInput={(e) => setContent(e.currentTarget.textContent || '')}
-          className="min-h-[300px] text-gray-700 dark:text-gray-200 text-base leading-relaxed outline-none prose prose-lg dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
+          {/* Voice Recordings */}
+          {note.voiceRecordings && note.voiceRecordings.length > 0 && (
+            <div className="mb-4 space-y-2">
+              {note.voiceRecordings.map(rec => (
+                <VoicePlayer key={rec.id} recording={rec} />
+              ))}
+            </div>
+          )}
 
-        {/* Checklist */}
-        {showChecklist && (
-          <div className="mt-6 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
-              Checklist
-            </h4>
-            <div className="space-y-2">
-              {checklist.map(item => (
+          {/* Rich Text Editor */}
+          <div
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            dir={noteRTL ? 'rtl' : 'ltr'}
+            onMouseUp={handleMouseUp}
+            onInput={handleContentChange}
+            className="min-h-[400px] outline-none text-gray-700 dark:text-gray-200 leading-relaxed text-base prose prose-lg max-w-none"
+            style={{
+              fontFamily: getFontFamilyCSS(note.fontFamily),
+              fontSize: '16px',
+              lineHeight: '2',
+            }}
+            dangerouslySetInnerHTML={{ __html: note.content }}
+          />
+
+          {/* Checklist */}
+          {note.checklist && note.checklist.length > 0 && (
+            <div className="mt-6 space-y-2">
+              {note.checklist.map(item => (
                 <div key={item.id} className="flex items-center gap-3 group">
                   <button
-                    onClick={() => toggleCheckItem(item.id)}
-                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                      item.checked ? 'bg-green-500 border-green-500' : 'border-gray-300 dark:border-gray-600 hover:border-green-400'
+                    onClick={() => {
+                      const updated = note.checklist!.map(c =>
+                        c.id === item.id ? { ...c, checked: !c.checked } : c
+                      );
+                      updateNote(note.id, { checklist: updated });
+                    }}
+                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                      item.checked
+                        ? 'bg-emerald-500 border-emerald-500'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-violet-400'
                     }`}
                   >
-                    {item.checked && (
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                      </svg>
-                    )}
+                    {item.checked && <i className="fas fa-check text-white text-[10px]"></i>}
                   </button>
-                  <span className={`flex-1 text-sm ${item.checked ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                  <span className={`text-sm ${item.checked ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-200'}`}>
                     {item.text}
                   </span>
-                  <button
-                    onClick={() => removeCheckItem(item.id)}
-                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all"
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/></svg>
-                  </button>
                 </div>
               ))}
-              <div className="flex items-center gap-2 mt-2">
-                <input
-                  type="text"
-                  value={newCheckItem}
-                  onChange={(e) => setNewCheckItem(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addCheckItem()}
-                  placeholder="Add item..."
-                  className="flex-1 text-sm bg-transparent border-none outline-none text-gray-700 dark:text-gray-300 placeholder-gray-400"
-                />
-                <button onClick={addCheckItem} className="text-indigo-500 hover:text-indigo-600">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/></svg>
-                </button>
-              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </main>
 
-      {/* Floating highlight menu */}
-      {showHighlightMenu && (
-        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Highlight color</p>
-          <div className="flex gap-2">
-            {highlightColors.map(color => (
-              <button
-                key={color}
-                onClick={() => applyHighlight(color)}
-                className="w-8 h-8 rounded-lg border-2 border-white dark:border-gray-600 shadow-sm hover:scale-110 transition-transform"
-                style={{ backgroundColor: color }}
-              />
-            ))}
-          </div>
-          <button onClick={() => setShowHighlightMenu(false)} className="mt-2 text-xs text-gray-400 hover:text-gray-600 w-full text-center">
-            Cancel
+      {/* Bottom Formatting Toolbar */}
+      <div className="sticky bottom-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 px-4 py-2">
+        <div className="max-w-4xl mx-auto flex items-center gap-1 overflow-x-auto scrollbar-hide">
+          {/* Text formatting */}
+          <button onClick={() => execCommand('bold')} className="toolbar-btn" title={noteRTL ? 'ضخیم' : 'Bold'}>
+            <i className="fas fa-bold"></i>
+          </button>
+          <button onClick={() => execCommand('italic')} className="toolbar-btn" title={noteRTL ? 'کج' : 'Italic'}>
+            <i className="fas fa-italic"></i>
+          </button>
+          <button onClick={() => execCommand('underline')} className="toolbar-btn" title={noteRTL ? 'زیرخط' : 'Underline'}>
+            <i className="fas fa-underline"></i>
+          </button>
+          <button onClick={() => execCommand('strikeThrough')} className="toolbar-btn" title={noteRTL ? 'خط‌خورده' : 'Strikethrough'}>
+            <i className="fas fa-strikethrough"></i>
+          </button>
+
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+
+          {/* Headers */}
+          <button onClick={() => execCommand('formatBlock', 'h1')} className="toolbar-btn text-xs font-bold" title="H1">
+            H1
+          </button>
+          <button onClick={() => execCommand('formatBlock', 'h2')} className="toolbar-btn text-xs font-bold" title="H2">
+            H2
+          </button>
+          <button onClick={() => execCommand('formatBlock', 'h3')} className="toolbar-btn text-xs font-bold" title="H3">
+            H3
+          </button>
+
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+
+          {/* Alignment */}
+          <button onClick={() => execCommand('justifyRight')} className="toolbar-btn" title={noteRTL ? 'راست‌چین' : 'Align right'}>
+            <i className="fas fa-align-right"></i>
+          </button>
+          <button onClick={() => execCommand('justifyCenter')} className="toolbar-btn" title={noteRTL ? 'وسط‌چین' : 'Align center'}>
+            <i className="fas fa-align-center"></i>
+          </button>
+          <button onClick={() => execCommand('justifyLeft')} className="toolbar-btn" title={noteRTL ? 'چپ‌چین' : 'Align left'}>
+            <i className="fas fa-align-left"></i>
+          </button>
+
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+
+          {/* Lists */}
+          <button onClick={() => execCommand('insertUnorderedList')} className="toolbar-btn" title={noteRTL ? 'لیست' : 'Bullet list'}>
+            <i className="fas fa-list-ul"></i>
+          </button>
+          <button onClick={() => execCommand('insertOrderedList')} className="toolbar-btn" title={noteRTL ? 'لیست عددی' : 'Numbered list'}>
+            <i className="fas fa-list-ol"></i>
+          </button>
+          <button onClick={() => execCommand('formatBlock', 'blockquote')} className="toolbar-btn" title={noteRTL ? 'نقل قول' : 'Quote'}>
+            <i className="fas fa-quote-right"></i>
+          </button>
+
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+
+          {/* Media insertion */}
+          <ImageUploader onImageSelected={handleImageSelected} />
+
+          <button
+            onClick={() => setShowVoiceRecorder(true)}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <i className="fas fa-microphone text-red-500 w-5"></i>
+            {noteRTL ? 'ضبط صدا' : 'Record'}
+          </button>
+
+          <button
+            onClick={() => setViewMode('drawing')}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <i className="fas fa-paint-brush text-purple-500 w-5"></i>
+            {noteRTL ? 'طراحی' : 'Draw'}
+          </button>
+        </div>
+      </div>
+
+      {/* Highlight Picker */}
+      {showHighlightPicker && (
+        <div
+          className="fixed z-50 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 flex gap-1.5"
+          style={{ top: highlightPos.y - 50, left: highlightPos.x - 80 }}
+        >
+          {['#fef08a', '#bbf7d0', '#bfdbfe', '#e9d5ff', '#fecdd3', '#fed7aa'].map(color => (
+            <button
+              key={color}
+              onClick={() => applyHighlight(color)}
+              className="w-7 h-7 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+              style={{ backgroundColor: color }}
+            />
+          ))}
+          <button
+            onClick={() => setShowHighlightPicker(false)}
+            className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-400 text-xs"
+          >
+            <i className="fas fa-times"></i>
           </button>
         </div>
       )}
 
-      {/* Bottom Formatting Toolbar */}
-      <div className="sticky bottom-0 z-40 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border-t border-gray-200/50 dark:border-gray-700/50">
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-1 overflow-x-auto">
-            {/* Text formatting */}
-            <button
-              onClick={() => setIsBold(!isBold)}
-              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${isBold ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-            >
-              <span className="font-bold text-sm">B</span>
-            </button>
-            <button
-              onClick={() => setIsItalic(!isItalic)}
-              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${isItalic ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-            >
-              <span className="italic text-sm">I</span>
-            </button>
-            <button
-              onClick={() => setIsUnderline(!isUnderline)}
-              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${isUnderline ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-            >
-              <span className="underline text-sm">U</span>
-            </button>
-            <button className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors line-through">
-              <span className="text-sm">S</span>
-            </button>
+      {/* Voice Recorder Modal */}
+      {showVoiceRecorder && (
+        <VoiceRecorder
+          onRecordingComplete={handleVoiceRecordingComplete}
+          onCancel={() => setShowVoiceRecorder(false)}
+        />
+      )}
 
-            <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+      {/* Export Menu */}
+      {showExport && (
+        <ExportMenu onClose={() => setShowExport(false)} />
+      )}
 
-            {/* Headings */}
-            <select
-              value={heading}
-              onChange={(e) => setHeading(e.target.value)}
-              className="h-9 px-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm text-gray-600 dark:text-gray-300 border-none outline-none cursor-pointer"
-            >
-              <option value="p">Paragraph</option>
-              <option value="h1">H1</option>
-              <option value="h2">H2</option>
-              <option value="h3">H3</option>
-            </select>
-
-            <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
-
-            {/* Alignment */}
-            <button className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 012 10z" clipRule="evenodd"/></svg>
-            </button>
-            <button className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm4 5.5a.75.75 0 01.75-.75h10.5a.75.75 0 010 1.5H6.75A.75.75 0 016 10.25zM2 15.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75z" clipRule="evenodd"/></svg>
-            </button>
-
-            <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
-
-            {/* Insert elements */}
-            <button
-              onClick={() => setShowChecklist(!showChecklist)}
-              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${showChecklist ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
-            </button>
-            <button
-              onClick={() => setShowVoiceMemo(!showVoiceMemo)}
-              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${showVoiceMemo ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-            </button>
-            <button
-              onClick={() => setViewMode('drawing')}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-            </button>
-            <button className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Close menus on outside click */}
+      {(showOptionsMenu || showFontMenu) && (
+        <div className="fixed inset-0 z-30" onClick={() => { setShowOptionsMenu(false); setShowFontMenu(false); }} />
+      )}
     </div>
   );
 }
