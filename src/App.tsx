@@ -29,21 +29,23 @@ const AppContent: React.FC = () => {
                 </h1>
               </div>
 
-              {/* Language Toggle - Next to logo */}
-              <button
-                onClick={() => setAppLanguage(appLanguage === 'en' ? 'fa' : 'en')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-violet-100 dark:hover:bg-violet-900/30 border border-slate-200 dark:border-slate-700 transition-all duration-200 group"
-                title={t.language}
-              >
-                <span className="text-sm">🌐</span>
-                <span className={`text-xs font-semibold transition-colors ${appLanguage === 'fa' ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 dark:text-slate-400 group-hover:text-violet-600'}`}>
-                  FA
-                </span>
-                <span className="text-slate-300 dark:text-slate-600">|</span>
-                <span className={`text-xs font-semibold transition-colors ${appLanguage === 'en' ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 dark:text-slate-400 group-hover:text-violet-600'}`}>
-                  EN
-                </span>
-              </button>
+              {/* Language Toggle - Only on Dashboard */}
+              {viewMode === 'dashboard' && (
+                <button
+                  onClick={() => setAppLanguage(appLanguage === 'en' ? 'fa' : 'en')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-violet-100 dark:hover:bg-violet-900/30 border border-slate-200 dark:border-slate-700 transition-all duration-200 group"
+                  title={t.language}
+                >
+                  <span className="text-sm">🌐</span>
+                  <span className={`text-xs font-semibold transition-colors ${appLanguage === 'fa' ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 dark:text-slate-400 group-hover:text-violet-600'}`}>
+                    FA
+                  </span>
+                  <span className="text-slate-300 dark:text-slate-600">|</span>
+                  <span className={`text-xs font-semibold transition-colors ${appLanguage === 'en' ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 dark:text-slate-400 group-hover:text-violet-600'}`}>
+                    EN
+                  </span>
+                </button>
+              )}
             </div>
 
             {/* Right side actions */}
