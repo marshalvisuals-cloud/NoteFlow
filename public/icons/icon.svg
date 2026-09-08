@@ -1,0 +1,36 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#gradient)"/>
+  
+  <!-- Feather/Pen Icon -->
+  <g transform="translate(256, 256)">
+    <!-- Main feather shape -->
+    <path d="M -60,-120 Q -80,-80 -70,-40 Q -60,0 -40,40 Q -20,80 0,120 Q 20,80 40,40 Q 60,0 70,-40 Q 80,-80 60,-120 Q 40,-140 0,-150 Q -40,-140 -60,-120 Z" 
+          fill="white" opacity="0.95"/>
+    
+    <!-- Feather details - left side -->
+    <path d="M -50,-100 Q -60,-60 -50,-20 Q -40,20 -30,60" 
+          stroke="white" stroke-width="3" fill="none" opacity="0.6"/>
+    <path d="M -40,-80 Q -50,-40 -40,0 Q -30,40 -20,80" 
+          stroke="white" stroke-width="3" fill="none" opacity="0.6"/>
+    
+    <!-- Feather details - right side -->
+    <path d="M 50,-100 Q 60,-60 50,-20 Q 40,20 30,60" 
+          stroke="white" stroke-width="3" fill="none" opacity="0.6"/>
+    <path d="M 40,-80 Q 50,-40 40,0 Q 30,40 20,80" 
+          stroke="white" stroke-width="3" fill="none" opacity="0.6"/>
+    
+    <!-- Center line -->
+    <line x1="0" y1="-140" x2="0" y2="110" stroke="white" stroke-width="4" opacity="0.8"/>
+    
+    <!-- Pen tip -->
+    <path d="M -8,110 L 0,140 L 8,110 Z" fill="white" opacity="0.95"/>
+  </g>
+  
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>
