@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import Editor from './components/Editor';
 import DrawingCanvas from './components/DrawingCanvas';
 import SettingsModal from './components/SettingsModal';
+import InstallPrompt from './components/InstallPrompt';
 
 const AppContent: React.FC = () => {
   const { viewMode, appLanguage, setAppLanguage, t, isRTL } = useApp();
@@ -108,6 +109,9 @@ const AppContent: React.FC = () => {
 
       {/* Settings Modal */}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      
+      {/* PWA Install Prompt */}
+      <InstallPrompt />
     </div>
   );
 };
