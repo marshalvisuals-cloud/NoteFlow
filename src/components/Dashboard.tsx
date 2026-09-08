@@ -2,34 +2,58 @@ import React, { useState } from 'react';
 import { useApp } from '../store';
 import { Note } from '../types';
 
-export default function Dashboard() {
+const Dashboard: React.FC = () => {
   const {
-    notes, searchQuery, setSearchQuery, activeTag, setActiveTag,
-    setCurrentNote, setViewMode, addNote, togglePin, toggleLock,
-    duplicateNote, deleteNote, isRTL
+    notes,
+    searchQuery,
+    setSearchQuery,
+    selectedTag,
+    setSelectedTag,
+    appLanguage,
+    isRTL,
+    t,
+    createNote,
+    openNote,
+    togglePin,
+    toggleLock,
+    duplicateNote,
+    deleteNote,
   } = useApp();
 
   const [contextMenu, setContextMenu] = useState<{ noteId: string; x: number; y: number } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const tags = ['همه', 'کار', 'شخصی', 'مطالعه', 'طراحی', 'سلامت'];
+  const tags = [
+    { id: 'all', label: t.allNotes, icon: '📋' },
+    { id: appLanguage === 'fa' ? 'کاری' : 'Work', label: t.tagWork, icon: '💼' },
+    { id: appLanguage === 'fa' ? 'شخصی' : 'Personal', label: t.tagPersonal, icon: '🏠' },
+    { id: appLanguage === 'fa' ? 'مطالعه' : 'Study', label: t.tagStudy, icon: '📚' },
+    { id: appLanguage === 'fa' ? 'طراحی' : 'Design', label: t.tagDesign, icon: '🎨' },
+    { id: appLanguage === 'fa' ? 'سلامتی' : 'Health', label: t.tagHealth, icon: '💪' },
+  ];
 
   const filteredNotes = notes.filter(note => {
-    const matchesSearch = note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = !searchQuery ||
+      note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       note.content.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTag = activeTag === 'همه' || note.tags.includes(activeTag);
+    const matchesTag = selectedTag === 'all' || note.tags.includes(selectedTag);
     return matchesSearch && matchesTag;
   });
 
   const pinnedNotes = filteredNotes.filter(n => n.pinned);
-  const unpinnedNotes = filteredNotes.filter(n => !n.pinned);
+  const recentNotes = filteredNotes.filter(n => !n.pinned);
 
-  const openNote = (note: Note) => {
-    if (note.locked) {
-      const pass = prompt(isRTL ? 'رمز عبور را وارد کنید:' : 'Enter password:');
-      if (pass !== '1234') return;
-    }
-    setCurrentNote(note);
-    setViewMode('editor');
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return t.justNow;
+    if (minutes < 60) return `${minutes} ${t.minutesAgo}`;
+    if (hours < 24) return `${hours} ${t.hoursAgo}`;
+    return `${days} ${t.daysAgo}`;
   };
 
   const handleContextMenu = (e: React.MouseEvent, noteId: string) => {
@@ -37,191 +61,178 @@ export default function Dashboard() {
     setContextMenu({ noteId, x: e.clientX, y: e.clientY });
   };
 
-  const formatDate = (date: Date) => {
-    if (isRTL) {
-      return new Date(date).toLocaleDateString('fa-IR');
-    }
-    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const handleDelete = (id: string) => {
+    deleteNote(id);
+    setDeleteConfirm(null);
   };
 
-  const renderNoteCard = (note: Note) => (
+  const NoteCard: React.FC<{ note: Note }> = ({ note }) => (
     <div
-      key={note.id}
-      className="note-card group relative rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 dark:border-gray-700 overflow-hidden"
-      style={{ backgroundColor: note.color + '20', borderRight: `4px solid ${note.color}` }}
-      onClick={() => openNote(note)}
+      className={`group relative rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl border ${
+        note.locked
+          ? 'bg-slate-100/80 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
+          : 'bg-white/80 dark:bg-slate-800/80 border-slate-200/50 dark:border-slate-700/50'
+      } backdrop-blur-sm`}
+      style={{ borderInlineStart: `4px solid ${note.color}` }}
+      onClick={() => !note.locked && openNote(note)}
       onContextMenu={(e) => handleContextMenu(e, note.id)}
     >
-      {/* Lock indicator */}
+      {/* Lock overlay */}
       {note.locked && (
-        <div className="absolute top-3 left-3 text-gray-400">
-          <i className="fas fa-lock text-sm"></i>
+        <div className="absolute inset-0 rounded-2xl flex items-center justify-center bg-slate-100/90 dark:bg-slate-800/90 backdrop-blur-sm z-10">
+          <div className="text-center">
+            <div className="text-3xl mb-2">🔒</div>
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-fontBody">{t.locked}</p>
+          </div>
         </div>
       )}
 
-      {/* Pin indicator */}
+      {/* Pin badge */}
       {note.pinned && (
-        <div className="absolute top-3 right-3 text-amber-500">
-          <i className="fas fa-thumbtack text-sm"></i>
+        <div className="absolute -top-2 -right-2 w-6 h-6 bg-amber-400 rounded-full flex items-center justify-center shadow-md">
+          <span className="text-xs">📌</span>
         </div>
       )}
 
-      {/* Title */}
-      <h3 className="font-bold text-base mb-2 mt-2 line-clamp-2 text-gray-800 dark:text-gray-100">
-        {note.locked ? (isRTL ? '🔒 یادداشت قفل شده' : '🔒 Locked Note') : note.title}
-      </h3>
-
-      {/* Date */}
-      <p className="text-xs text-gray-400 mb-2">{formatDate(note.updatedAt)}</p>
+      {/* Header */}
+      <div className="flex items-start justify-between mb-3">
+        <h3 className={`font-bold text-slate-800 dark:text-slate-100 line-clamp-1 font-fontBody ${note.isRTL ? 'text-right' : 'text-left'}`} dir={note.isRTL ? 'rtl' : 'ltr'}>
+          {note.title || t.untitled}
+        </h3>
+      </div>
 
       {/* Content preview */}
-      {!note.locked && (
-        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-3 leading-relaxed">
-          {note.content}
-        </p>
-      )}
+      <p className={`text-sm text-slate-600 dark:text-slate-300 line-clamp-3 mb-3 font-fontBody ${note.isRTL ? 'text-right' : 'text-left'}`} dir={note.isRTL ? 'rtl' : 'ltr'}>
+        {note.content || t.placeholder}
+      </p>
 
       {/* Checklist preview */}
-      {note.checklist && !note.locked && (
+      {note.checklist && note.checklist.length > 0 && (
         <div className="mb-3 space-y-1">
           {note.checklist.slice(0, 3).map(item => (
-            <div key={item.id} className="flex items-center gap-2 text-xs text-gray-500">
-              <div className={`w-3.5 h-3.5 rounded border-2 flex items-center justify-center ${item.checked ? 'bg-emerald-500 border-emerald-500' : 'border-gray-300'}`}>
-                {item.checked && <i className="fas fa-check text-white text-[8px]"></i>}
+            <div key={item.id} className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <div className={`w-3.5 h-3.5 rounded border-2 flex items-center justify-center ${item.checked ? 'bg-violet-500 border-violet-500' : 'border-slate-300 dark:border-slate-600'}`}>
+                {item.checked && <span className="text-white text-[8px]">✓</span>}
               </div>
-              <span className={item.checked ? 'line-through opacity-50' : ''}>{item.text}</span>
+              <span className={item.checked ? 'line-through' : ''}>{item.text}</span>
             </div>
           ))}
+          {note.checklist.length > 3 && (
+            <p className="text-xs text-slate-400">+{note.checklist.length - 3} more</p>
+          )}
         </div>
       )}
 
       {/* Tags */}
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1.5 mb-3">
         {note.tags.map(tag => (
-          <span key={tag} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/60 dark:bg-gray-800/60 text-gray-600 dark:text-gray-300">
+          <span key={tag} className="px-2 py-0.5 text-xs rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-medium font-fontBody">
             {tag}
           </span>
         ))}
       </div>
 
-      {/* Media indicators */}
-      <div className="flex gap-2 mt-3 pt-2 border-t border-gray-100 dark:border-gray-700">
-        {note.hasDrawing && (
-          <span className="text-[10px] text-purple-500 flex items-center gap-1">
-            <i className="fas fa-paint-brush"></i> {isRTL ? 'طراحی' : 'Drawing'}
-          </span>
-        )}
-        {note.hasVoiceMemo && (
-          <span className="text-[10px] text-blue-500 flex items-center gap-1">
-            <i className="fas fa-microphone"></i> {isRTL ? 'صدا' : 'Voice'}
-          </span>
-        )}
-        {note.hasImage && (
-          <span className="text-[10px] text-green-500 flex items-center gap-1">
-            <i className="fas fa-image"></i> {isRTL ? 'تصویر' : 'Image'}
-          </span>
-        )}
+      {/* Footer */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-slate-400 dark:text-slate-500 font-fontBody">
+          {formatDate(note.updatedAt)}
+        </span>
+        <div className="flex items-center gap-1.5">
+          {note.hasVoiceMemo && <span className="text-xs" title={t.voiceMemo}>🎙️</span>}
+          {note.hasImage && <span className="text-xs" title={t.insertImage}>🖼️</span>}
+          {note.hasDrawing && <span className="text-xs" title={t.drawingCanvas}>🎨</span>}
+        </div>
       </div>
     </div>
   );
 
   return (
-    <div className="h-full flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 px-4 py-3">
-        <div className="flex items-center gap-3 max-w-7xl mx-auto">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-              <i className="fas fa-feather-alt text-white text-sm"></i>
-            </div>
-            <h1 className="text-lg font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent hidden sm:block">
-              {isRTL ? 'نوت‌فلو' : 'NoteFlow'}
-            </h1>
-          </div>
-
-          {/* Search */}
-          <div className="flex-1 max-w-xl mx-auto relative">
-            <i className={`fas fa-search absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-gray-400 text-sm`}></i>
-            <input
-              type="text"
-              placeholder={isRTL ? 'جستجو در یادداشت‌ها...' : 'Search notes...'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all`}
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            <button className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-              <i className="fas fa-user text-sm"></i>
-            </button>
-          </div>
+    <div className="space-y-6">
+      {/* Search Bar */}
+      <div className="relative">
+        <div className="absolute inset-y-0 start-0 flex items-center ps-4 pointer-events-none">
+          <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
         </div>
-      </header>
-
-      {/* Tags Filter */}
-      <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-800">
-        <div className="flex gap-2 overflow-x-auto pb-1 max-w-7xl mx-auto scrollbar-hide">
-          {tags.map(tag => (
-            <button
-              key={tag}
-              onClick={() => setActiveTag(tag)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                activeTag === tag
-                  ? 'bg-violet-500 text-white shadow-md shadow-violet-500/30'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t.searchPlaceholder}
+          className="w-full ps-12 pe-4 py-3.5 rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 backdrop-blur-sm transition-all font-fontBody"
+          dir={isRTL ? 'rtl' : 'ltr'}
+        />
       </div>
 
-      {/* Content */}
-      <main className="flex-1 overflow-y-auto px-4 py-6 max-w-7xl mx-auto w-full">
-        {/* Pinned Notes */}
-        {pinnedNotes.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
-              <i className="fas fa-thumbtack text-amber-500"></i>
-              {isRTL ? 'سنجاق شده' : 'Pinned'}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {pinnedNotes.map(renderNoteCard)}
-            </div>
-          </section>
-        )}
+      {/* Tags Filter */}
+      <div className="flex flex-wrap gap-2">
+        {tags.map(tag => (
+          <button
+            key={tag.id}
+            onClick={() => setSelectedTag(tag.id)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 font-fontBody ${
+              selectedTag === tag.id
+                ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/25'
+                : 'bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-violet-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+            }`}
+          >
+            <span>{tag.icon}</span>
+            <span>{tag.label}</span>
+          </button>
+        ))}
+      </div>
 
-        {/* All Notes */}
-        <section>
-          <h2 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
-            <i className="fas fa-layer-group"></i>
-            {isRTL ? 'همه یادداشت‌ها' : 'All Notes'}
-            <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
-              {filteredNotes.length}
-            </span>
+      {/* Pinned Notes */}
+      {pinnedNotes.length > 0 && (
+        <div>
+          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2 font-fontBody">
+            <span>📌</span>
+            <span>{t.pinnedNotes}</span>
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {unpinnedNotes.map(renderNoteCard)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pinnedNotes.map(note => (
+              <NoteCard key={note.id} note={note} />
+            ))}
           </div>
-          {filteredNotes.length === 0 && (
-            <div className="text-center py-16 text-gray-400">
-              <i className="fas fa-search text-4xl mb-4 opacity-30"></i>
-              <p className="text-lg">{isRTL ? 'یادداشتی یافت نشد' : 'No notes found'}</p>
-            </div>
-          )}
-        </section>
-      </main>
+        </div>
+      )}
 
-      {/* FAB */}
+      {/* Recent Notes */}
+      <div>
+        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2 font-fontBody">
+          <span>📝</span>
+          <span>{recentNotes.length > 0 ? t.recentNotes : t.allNotes}</span>
+          <span className="text-sm font-normal text-slate-400">({recentNotes.length})</span>
+        </h2>
+        {recentNotes.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {recentNotes.map(note => (
+              <NoteCard key={note.id} note={note} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <div className="text-5xl mb-4">📝</div>
+            <p className="text-slate-500 dark:text-slate-400 font-fontBody">
+              {searchQuery ? t.noSearchResults : t.noNotes}
+            </p>
+            {!searchQuery && (
+              <p className="text-sm text-slate-400 mt-2 font-fontBody">{t.noNotesDesc}</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* FAB - New Note */}
       <button
-        onClick={addNote}
-        className={`fixed bottom-6 ${isRTL ? 'left-6' : 'right-6'} w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-xl shadow-violet-500/30 flex items-center justify-center text-xl hover:scale-110 transition-transform z-50`}
+        onClick={createNote}
+        className="fixed bottom-8 end-8 w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-xl shadow-violet-500/30 flex items-center justify-center hover:scale-110 transition-transform duration-200 z-40"
+        title={t.newNote}
       >
-        <i className="fas fa-plus"></i>
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+        </svg>
       </button>
 
       {/* Context Menu */}
@@ -229,29 +240,66 @@ export default function Dashboard() {
         <>
           <div className="fixed inset-0 z-50" onClick={() => setContextMenu(null)} />
           <div
-            className="fixed z-50 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2 min-w-[180px]"
-            style={{ top: contextMenu.y, left: contextMenu.x }}
+            className="fixed z-50 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-2 min-w-[180px] font-fontBody"
+            style={{ top: contextMenu.y, left: isRTL ? undefined : contextMenu.x, right: isRTL ? window.innerWidth - contextMenu.x : undefined }}
           >
-            <button onClick={() => { togglePin(contextMenu.noteId); setContextMenu(null); }} className="w-full px-4 py-2.5 text-sm text-right hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3">
-              <i className="fas fa-thumbtack text-amber-500 w-4"></i>
-              {isRTL ? 'سنجاق کردن' : 'Pin to top'}
+            <button
+              onClick={() => { togglePin(contextMenu.noteId); setContextMenu(null); }}
+              className="w-full px-4 py-2.5 text-start text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-3"
+            >
+              <span>📌</span>
+              <span>{t.pin}</span>
             </button>
-            <button onClick={() => { toggleLock(contextMenu.noteId); setContextMenu(null); }} className="w-full px-4 py-2.5 text-sm text-right hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3">
-              <i className="fas fa-lock text-red-500 w-4"></i>
-              {isRTL ? 'قفل کردن' : 'Lock note'}
+            <button
+              onClick={() => { toggleLock(contextMenu.noteId); setContextMenu(null); }}
+              className="w-full px-4 py-2.5 text-start text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-3"
+            >
+              <span>🔒</span>
+              <span>{t.lock}</span>
             </button>
-            <button onClick={() => { duplicateNote(contextMenu.noteId); setContextMenu(null); }} className="w-full px-4 py-2.5 text-sm text-right hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3">
-              <i className="fas fa-copy text-blue-500 w-4"></i>
-              {isRTL ? 'کپی کردن' : 'Make a copy'}
+            <button
+              onClick={() => { duplicateNote(contextMenu.noteId); setContextMenu(null); }}
+              className="w-full px-4 py-2.5 text-start text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-3"
+            >
+              <span>📄</span>
+              <span>{t.copy}</span>
             </button>
-            <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
-            <button onClick={() => { deleteNote(contextMenu.noteId); setContextMenu(null); }} className="w-full px-4 py-2.5 text-sm text-right hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 flex items-center gap-3">
-              <i className="fas fa-trash w-4"></i>
-              {isRTL ? 'حذف' : 'Delete'}
+            <hr className="my-1 border-slate-200 dark:border-slate-700" />
+            <button
+              onClick={() => { setDeleteConfirm(contextMenu.noteId); setContextMenu(null); }}
+              className="w-full px-4 py-2.5 text-start text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3"
+            >
+              <span>🗑️</span>
+              <span>{t.delete}</span>
             </button>
           </div>
         </>
       )}
+
+      {/* Delete Confirmation */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-sm mx-4 shadow-2xl font-fontBody">
+            <p className="text-slate-800 dark:text-slate-100 mb-6 text-center">{t.confirmDelete}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              >
+                {t.cancel}
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirm)}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                {t.delete}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default Dashboard;

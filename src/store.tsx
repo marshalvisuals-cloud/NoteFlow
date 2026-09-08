@@ -1,195 +1,241 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { Note, ViewMode, VoiceRecording, InlineImage } from './types';
+import { Note, ViewMode, AppLanguage, AppFont, translations, Translations } from './types';
 
-interface AppState {
+import { VoiceRecording, InlineImage } from './types';
+
+interface AppContextType {
   notes: Note[];
   currentNote: Note | null;
   viewMode: ViewMode;
   searchQuery: string;
-  activeTag: string;
+  selectedTag: string;
+  appLanguage: AppLanguage;
   isRTL: boolean;
-  fontFamily: string;
-  theme: 'light' | 'dark';
-}
-
-interface AppContextType extends AppState {
-  setCurrentNote: (note: Note | null) => void;
+  t: Translations;
   setViewMode: (mode: ViewMode) => void;
   setSearchQuery: (query: string) => void;
+  setSelectedTag: (tag: string) => void;
   setActiveTag: (tag: string) => void;
+  setAppLanguage: (lang: AppLanguage) => void;
+  createNote: () => void;
   addNote: () => void;
   updateNote: (id: string, updates: Partial<Note>) => void;
   deleteNote: (id: string) => void;
+  setCurrentNote: (note: Note | null) => void;
+  openNote: (note: Note) => void;
   togglePin: (id: string) => void;
   toggleLock: (id: string) => void;
   duplicateNote: (id: string) => void;
   toggleRTL: () => void;
-  setFontFamily: (font: string) => void;
-  toggleTheme: () => void;
-  addVoiceRecording: (noteId: string, recording: VoiceRecording) => void;
-  addInlineImage: (noteId: string, image: InlineImage) => void;
-  updateInlineImage: (noteId: string, imageId: string, updates: Partial<InlineImage>) => void;
-  removeInlineImage: (noteId: string, imageId: string) => void;
+  setFontFamily: (font: AppFont) => void;
+  addVoiceRecording: (recording: VoiceRecording) => void;
+  addInlineImage: (image: InlineImage) => void;
+  updateInlineImage: (id: string, updates: Partial<InlineImage>) => void;
+  removeInlineImage: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const createDefaultNote = (isRTL: boolean): Note => ({
-  id: Date.now().toString(),
-  title: isRTL ? 'یادداشت جدید' : 'New Note',
-  content: '',
-  tags: [],
-  color: '#ffffff',
-  pinned: false,
-  locked: false,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  hasDrawing: false,
-  hasVoiceMemo: false,
-  hasImage: false,
-  voiceRecordings: [],
-  inlineImages: [],
-  isRTL,
-  fontFamily: isRTL ? 'vazirmatn' : 'calibri',
-});
+export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [notes, setNotes] = useState<Note[]>([
+    {
+      id: '1',
+      title: 'جلسه تیم طراحی',
+      content: 'بررسی طرح‌های جدید اپلیکیشن موبایل و تعیین اولویت‌های هفته آینده. نیاز به هماهنگی با تیم توسعه داریم.',
+      tags: ['کاری'],
+      color: '#a78bfa',
+      pinned: true,
+      locked: false,
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 30 * 60 * 1000),
+      hasDrawing: false,
+      hasVoiceMemo: false,
+      hasImage: false,
+      isRTL: true,
+      fontFamily: 'vazirmatn',
+      voiceRecordings: [],
+      inlineImages: [],
+    },
+    {
+      id: '2',
+      title: 'Shopping List',
+      content: 'Milk, eggs, bread, fruits, vegetables, and some snacks for the weekend gathering.',
+      tags: ['Personal'],
+      color: '#fbbf24',
+      pinned: false,
+      locked: false,
+      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
+      hasDrawing: false,
+      hasVoiceMemo: false,
+      hasImage: false,
+      isRTL: false,
+      fontFamily: 'system',
+      checklist: [
+        { id: 'c1', text: 'Milk', checked: true },
+        { id: 'c2', text: 'Eggs', checked: true },
+        { id: 'c3', text: 'Bread', checked: false },
+        { id: 'c4', text: 'Fruits', checked: false },
+      ],
+      voiceRecordings: [],
+      inlineImages: [],
+    },
+    {
+      id: '3',
+      title: 'یادگیری ری‌اکت',
+      content: 'مطالعه هوک‌های جدید React شامل useTransition و useDeferredValue. بررسی بهترین روش‌های بهینه‌سازی عملکرد.',
+      tags: ['مطالعه'],
+      color: '#34d399',
+      pinned: false,
+      locked: false,
+      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      hasDrawing: true,
+      hasVoiceMemo: true,
+      hasImage: true,
+      isRTL: true,
+      fontFamily: 'nazanin',
+      voiceRecordings: [],
+      inlineImages: [],
+    },
+    {
+      id: '4',
+      title: 'Project Ideas',
+      content: 'Brainstorming session notes for Q2 product roadmap. Focus on user engagement features and performance improvements.',
+      tags: ['Design'],
+      color: '#f472b6',
+      pinned: true,
+      locked: false,
+      createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      hasDrawing: false,
+      hasVoiceMemo: false,
+      hasImage: false,
+      isRTL: false,
+      fontFamily: 'calibri',
+      voiceRecordings: [],
+      inlineImages: [],
+    },
+    {
+      id: '5',
+      title: 'یادداشت خصوصی',
+      content: 'این یادداشت قفل شده و فقط با رمز عبور قابل دسترسی است.',
+      tags: ['شخصی'],
+      color: '#60a5fa',
+      pinned: false,
+      locked: true,
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+      hasDrawing: false,
+      hasVoiceMemo: false,
+      hasImage: false,
+      isRTL: true,
+      fontFamily: 'vazirmatn',
+      voiceRecordings: [],
+      inlineImages: [],
+    },
+    {
+      id: '6',
+      title: 'Workout Plan',
+      content: 'Monday: Chest & Triceps\nTuesday: Back & Biceps\nWednesday: Rest\nThursday: Legs\nFriday: Shoulders & Abs',
+      tags: ['Health'],
+      color: '#fb923c',
+      pinned: false,
+      locked: false,
+      createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      hasDrawing: false,
+      hasVoiceMemo: false,
+      hasImage: false,
+      isRTL: false,
+      fontFamily: 'system',
+      checklist: [
+        { id: 'w1', text: 'Monday - Chest', checked: true },
+        { id: 'w2', text: 'Tuesday - Back', checked: true },
+        { id: 'w3', text: 'Wednesday - Rest', checked: true },
+        { id: 'w4', text: 'Thursday - Legs', checked: false },
+        { id: 'w5', text: 'Friday - Shoulders', checked: false },
+      ],
+      voiceRecordings: [],
+      inlineImages: [],
+    },
+    {
+      id: '7',
+      title: 'گزارش هفتگی',
+      content: 'پیشرفت پروژه ۸۰٪ تکمیل شده. نیاز به بازبینی نهایی و ارسال به مشتری تا پایان هفته.',
+      tags: ['کاری'],
+      color: '#818cf8',
+      pinned: false,
+      locked: false,
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+      hasDrawing: false,
+      hasVoiceMemo: false,
+      hasImage: false,
+      isRTL: true,
+      fontFamily: 'vazirmatn',
+      voiceRecordings: [],
+      inlineImages: [],
+    },
+    {
+      id: '8',
+      title: 'Meeting Notes',
+      content: 'Discussed the new feature rollout timeline. Action items assigned to the development team.',
+      tags: ['Work'],
+      color: '#2dd4bf',
+      pinned: false,
+      locked: false,
+      createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      hasDrawing: false,
+      hasVoiceMemo: false,
+      hasImage: false,
+      isRTL: false,
+      fontFamily: 'calibri',
+      voiceRecordings: [],
+      inlineImages: [],
+    },
+  ]);
 
-const initialNotes: Note[] = [
-  {
-    id: '1',
-    title: 'جلسه پروژه جدید',
-    content: 'بررسی نیازمندی‌های پروژه و تقسیم وظایف بین اعضای تیم. جلسه بعدی چهارشنبه ساعت ۱۰ صبح برگزار می‌شود.',
-    tags: ['کار'],
-    color: '#e8f4fd',
-    pinned: true,
-    locked: false,
-    createdAt: new Date(2024, 0, 15),
-    updatedAt: new Date(2024, 0, 16),
-    hasDrawing: false,
-    hasVoiceMemo: false,
-    hasImage: false,
-    voiceRecordings: [],
-    inlineImages: [],
-    isRTL: true,
-    fontFamily: 'vazirmatn',
-  },
-  {
-    id: '2',
-    title: 'Shopping List',
-    content: 'Milk, Bread, Eggs, Fruits, Vegetables, Coffee beans',
-    tags: ['شخصی'],
-    color: '#fef3e2',
-    pinned: false,
-    locked: false,
-    createdAt: new Date(2024, 0, 14),
-    updatedAt: new Date(2024, 0, 14),
-    hasDrawing: false,
-    hasVoiceMemo: false,
-    hasImage: false,
-    checklist: [
-      { id: 'c1', text: 'Milk', checked: true },
-      { id: 'c2', text: 'Bread', checked: false },
-      { id: 'c3', text: 'Eggs', checked: true },
-    ],
-    voiceRecordings: [],
-    inlineImages: [],
-    isRTL: false,
-    fontFamily: 'calibri',
-  },
-  {
-    id: '3',
-    title: 'ایده‌های طراحی اپلیکیشن',
-    content: 'طراحی رابط کاربری مدرن با پشتیبانی از حالت تاریک و روشن. استفاده از انیمیشن‌های نرم و روان.',
-    tags: ['طراحی'],
-    color: '#f3e8ff',
-    pinned: false,
-    locked: false,
-    createdAt: new Date(2024, 0, 13),
-    updatedAt: new Date(2024, 0, 15),
-    hasDrawing: true,
-    hasVoiceMemo: false,
-    hasImage: true,
-    voiceRecordings: [],
-    inlineImages: [],
-    isRTL: true,
-    fontFamily: 'vazirmatn',
-  },
-  {
-    id: '4',
-    title: 'یادداشت قفل شده',
-    content: 'اطلاعات حساس و محرمانه...',
-    tags: ['شخصی'],
-    color: '#fce4ec',
-    pinned: false,
-    locked: true,
-    createdAt: new Date(2024, 0, 12),
-    updatedAt: new Date(2024, 0, 12),
-    hasDrawing: false,
-    hasVoiceMemo: false,
-    hasImage: false,
-    voiceRecordings: [],
-    inlineImages: [],
-    isRTL: true,
-    fontFamily: 'vazirmatn',
-  },
-  {
-    id: '5',
-    title: 'برنامه ورزشی هفتگی',
-    content: 'شنبه: دویدن ۵ کیلومتر\nیکشنبه: بدنسازی\nدوشنبه: شنا\nسه‌شنبه: یوگا',
-    tags: ['سلامت'],
-    color: '#e8f5e9',
-    pinned: false,
-    locked: false,
-    createdAt: new Date(2024, 0, 10),
-    updatedAt: new Date(2024, 0, 14),
-    hasDrawing: false,
-    hasVoiceMemo: true,
-    hasImage: false,
-    checklist: [
-      { id: 'c4', text: 'دوشنبه - شنا', checked: true },
-      { id: 'c5', text: 'سه‌شنبه - یوگا', checked: false },
-      { id: 'c6', text: 'چهارشنبه - دویدن', checked: false },
-    ],
-    voiceRecordings: [],
-    inlineImages: [],
-    isRTL: true,
-    fontFamily: 'vazirmatn',
-  },
-  {
-    id: '6',
-    title: 'مطالعه فریمورک React',
-    content: 'یادگیری React Hooks و Context API. بررسی بهترین روش‌های مدیریت state.',
-    tags: ['مطالعه'],
-    color: '#fff3e0',
-    pinned: false,
-    locked: false,
-    createdAt: new Date(2024, 0, 9),
-    updatedAt: new Date(2024, 0, 13),
-    hasDrawing: false,
-    hasVoiceMemo: false,
-    hasImage: false,
-    voiceRecordings: [],
-    inlineImages: [],
-    isRTL: true,
-    fontFamily: 'nazanin',
-  },
-];
-
-export function AppProvider({ children }: { children: ReactNode }) {
-  const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTag, setActiveTag] = useState('همه');
-  const [isRTL, setIsRTL] = useState(true);
-  const [fontFamily, setFontFamily] = useState('vazirmatn');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [selectedTag, setSelectedTag] = useState('all');
+  const [appLanguage, setAppLanguageState] = useState<AppLanguage>('fa');
 
-  const addNote = useCallback(() => {
-    const newNote = createDefaultNote(isRTL);
+  const t = translations[appLanguage];
+  const isRTL = appLanguage === 'fa';
+
+  const setAppLanguage = useCallback((lang: AppLanguage) => {
+    setAppLanguageState(lang);
+    document.documentElement.dir = lang === 'fa' ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
+  }, []);
+
+  const createNote = useCallback(() => {
+    const isRTLDefault = appLanguage === 'fa';
+    const newNote: Note = {
+      id: Date.now().toString(),
+      title: '',
+      content: '',
+      tags: [],
+      color: '#a78bfa',
+      pinned: false,
+      locked: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      hasDrawing: false,
+      hasVoiceMemo: false,
+      hasImage: false,
+      isRTL: isRTLDefault,
+      fontFamily: isRTLDefault ? 'vazirmatn' : 'system',
+      voiceRecordings: [],
+      inlineImages: [],
+    };
     setNotes(prev => [newNote, ...prev]);
     setCurrentNote(newNote);
     setViewMode('editor');
-  }, [isRTL]);
+  }, [appLanguage]);
 
   const updateNote = useCallback((id: string, updates: Partial<Note>) => {
     setNotes(prev => prev.map(note =>
@@ -200,23 +246,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteNote = useCallback((id: string) => {
     setNotes(prev => prev.filter(note => note.id !== id));
-    setCurrentNote(prev => prev?.id === id ? null : prev);
-    setViewMode('dashboard');
+    if (currentNote?.id === id) {
+      setCurrentNote(null);
+      setViewMode('dashboard');
+    }
+  }, [currentNote]);
+
+  const openNote = useCallback((note: Note) => {
+    setCurrentNote(note);
+    setViewMode('editor');
   }, []);
 
   const togglePin = useCallback((id: string) => {
-    setNotes(prev => prev.map(note =>
-      note.id === id ? { ...note, pinned: !note.pinned } : note
-    ));
-    setCurrentNote(prev => prev?.id === id ? { ...prev, pinned: !prev.pinned } : prev);
-  }, []);
+    const note = notes.find(n => n.id === id);
+    if (note) updateNote(id, { pinned: !note.pinned });
+  }, [notes, updateNote]);
 
   const toggleLock = useCallback((id: string) => {
-    setNotes(prev => prev.map(note =>
-      note.id === id ? { ...note, locked: !note.locked } : note
-    ));
-    setCurrentNote(prev => prev?.id === id ? { ...prev, locked: !prev.locked } : prev);
-  }, []);
+    const note = notes.find(n => n.id === id);
+    if (note) updateNote(id, { locked: !note.locked });
+  }, [notes, updateNote]);
 
   const duplicateNote = useCallback((id: string) => {
     const note = notes.find(n => n.id === id);
@@ -224,124 +273,102 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const newNote: Note = {
         ...note,
         id: Date.now().toString(),
-        title: note.title + ' (کپی)',
+        title: note.title + ' (copy)',
+        pinned: false,
         createdAt: new Date(),
         updatedAt: new Date(),
-        pinned: false,
+        voiceRecordings: [...(note.voiceRecordings || [])],
+        inlineImages: [...(note.inlineImages || [])],
+        checklist: note.checklist ? [...note.checklist] : undefined,
       };
       setNotes(prev => [newNote, ...prev]);
     }
   }, [notes]);
 
   const toggleRTL = useCallback(() => {
-    setIsRTL(prev => {
-      const newVal = !prev;
-      document.documentElement.dir = newVal ? 'rtl' : 'ltr';
-      document.documentElement.lang = newVal ? 'fa' : 'en';
-      if (!newVal) {
-        document.documentElement.classList.add('ltr');
-      } else {
-        document.documentElement.classList.remove('ltr');
-      }
-      return newVal;
-    });
-  }, []);
+    if (currentNote) {
+      updateNote(currentNote.id, { isRTL: !currentNote.isRTL });
+    }
+  }, [currentNote, updateNote]);
 
-  const toggleTheme = useCallback(() => {
-    setTheme(prev => {
-      const newTheme = prev === 'light' ? 'dark' : 'light';
-      document.documentElement.classList.remove('light', 'dark');
-      document.documentElement.classList.add(newTheme);
-      document.documentElement.setAttribute('data-theme', newTheme);
-      return newTheme;
-    });
-  }, []);
+  const setFontFamily = useCallback((font: AppFont) => {
+    if (currentNote) {
+      updateNote(currentNote.id, { fontFamily: font });
+    }
+  }, [currentNote, updateNote]);
 
-  const addVoiceRecording = useCallback((noteId: string, recording: VoiceRecording) => {
-    setNotes(prev => prev.map(note =>
-      note.id === noteId ? {
-        ...note,
-        voiceRecordings: [...(note.voiceRecordings || []), recording],
-        hasVoiceMemo: true,
-        updatedAt: new Date(),
-      } : note
-    ));
-    setCurrentNote(prev => prev && prev.id === noteId ? {
-      ...prev,
-      voiceRecordings: [...(prev.voiceRecordings || []), recording],
-      hasVoiceMemo: true,
-      updatedAt: new Date(),
-    } : prev);
-  }, []);
+  const addVoiceRecording = useCallback((recording: VoiceRecording) => {
+    if (currentNote) {
+      const existing = currentNote.voiceRecordings || [];
+      const updated = [...existing, recording];
+      updateNote(currentNote.id, { voiceRecordings: updated, hasVoiceMemo: true });
+    }
+  }, [currentNote, updateNote]);
 
-  const addInlineImage = useCallback((noteId: string, image: InlineImage) => {
-    setNotes(prev => prev.map(note =>
-      note.id === noteId ? {
-        ...note,
-        inlineImages: [...(note.inlineImages || []), image],
-        hasImage: true,
-        updatedAt: new Date(),
-      } : note
-    ));
-    setCurrentNote(prev => prev && prev.id === noteId ? {
-      ...prev,
-      inlineImages: [...(prev.inlineImages || []), image],
-      hasImage: true,
-      updatedAt: new Date(),
-    } : prev);
-  }, []);
+  const addInlineImage = useCallback((image: InlineImage) => {
+    if (currentNote) {
+      const existing = currentNote.inlineImages || [];
+      const updated = [...existing, image];
+      updateNote(currentNote.id, { inlineImages: updated, hasImage: true });
+    }
+  }, [currentNote, updateNote]);
 
-  const updateInlineImage = useCallback((noteId: string, imageId: string, updates: Partial<InlineImage>) => {
-    setNotes(prev => prev.map(note =>
-      note.id === noteId ? {
-        ...note,
-        inlineImages: (note.inlineImages || []).map(img =>
-          img.id === imageId ? { ...img, ...updates } : img
-        ),
-        updatedAt: new Date(),
-      } : note
-    ));
-    setCurrentNote(prev => prev && prev.id === noteId ? {
-      ...prev,
-      inlineImages: (prev.inlineImages || []).map(img =>
-        img.id === imageId ? { ...img, ...updates } : img
-      ),
-      updatedAt: new Date(),
-    } : prev);
-  }, []);
+  const updateInlineImage = useCallback((id: string, updates: Partial<InlineImage>) => {
+    if (currentNote) {
+      const existing = currentNote.inlineImages || [];
+      const updated = existing.map(img =>
+        img.id === id ? { ...img, ...updates } : img
+      );
+      updateNote(currentNote.id, { inlineImages: updated });
+    }
+  }, [currentNote, updateNote]);
 
-  const removeInlineImage = useCallback((noteId: string, imageId: string) => {
-    setNotes(prev => prev.map(note =>
-      note.id === noteId ? {
-        ...note,
-        inlineImages: (note.inlineImages || []).filter(img => img.id !== imageId),
-        hasImage: (note.inlineImages || []).filter(img => img.id !== imageId).length > 0,
-        updatedAt: new Date(),
-      } : note
-    ));
-    setCurrentNote(prev => prev && prev.id === noteId ? {
-      ...prev,
-      inlineImages: (prev.inlineImages || []).filter(img => img.id !== imageId),
-      hasImage: (prev.inlineImages || []).filter(img => img.id !== imageId).length > 0,
-      updatedAt: new Date(),
-    } : prev);
-  }, []);
+  const removeInlineImage = useCallback((id: string) => {
+    if (currentNote) {
+      const existing = currentNote.inlineImages || [];
+      const updated = existing.filter(img => img.id !== id);
+      updateNote(currentNote.id, { inlineImages: updated, hasImage: updated.length > 0 });
+    }
+  }, [currentNote, updateNote]);
 
   return (
     <AppContext.Provider value={{
-      notes, currentNote, viewMode, searchQuery, activeTag, isRTL, fontFamily, theme,
-      setCurrentNote, setViewMode, setSearchQuery, setActiveTag,
-      addNote, updateNote, deleteNote, togglePin, toggleLock, duplicateNote,
-      toggleRTL, setFontFamily, toggleTheme,
-      addVoiceRecording, addInlineImage, updateInlineImage, removeInlineImage,
+      notes,
+      currentNote,
+      viewMode,
+      searchQuery,
+      selectedTag,
+      appLanguage,
+      isRTL,
+      t,
+      setViewMode,
+      setSearchQuery,
+      setSelectedTag,
+      setActiveTag: setSelectedTag,
+      setAppLanguage,
+      createNote,
+      addNote: createNote,
+      updateNote,
+      deleteNote,
+      setCurrentNote,
+      openNote,
+      togglePin,
+      toggleLock,
+      duplicateNote,
+      toggleRTL,
+      setFontFamily,
+      addVoiceRecording,
+      addInlineImage,
+      updateInlineImage,
+      removeInlineImage,
     }}>
       {children}
     </AppContext.Provider>
   );
-}
+};
 
-export function useApp() {
+export const useApp = () => {
   const context = useContext(AppContext);
   if (!context) throw new Error('useApp must be used within AppProvider');
   return context;
-}
+};
