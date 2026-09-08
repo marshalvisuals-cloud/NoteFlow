@@ -64,6 +64,195 @@ export const UI_SIZE_OPTIONS: { value: UISize; labelEn: string; labelFa: string;
   { value: 'xlarge', labelEn: 'Extra Large', labelFa: 'خیلی بزرگ', scale: 1.25 },
 ];
 
+export type AppTheme = 'violet' | 'ocean' | 'forest' | 'sunset' | 'rose' | 'midnight' | 'emerald' | 'coral';
+
+export interface ThemeColors {
+  primary: string;
+  primaryHover: string;
+  secondary: string;
+  accent: string;
+  gradientFrom: string;
+  gradientVia: string;
+  gradientTo: string;
+  shadow: string;
+  text: string;
+  textMuted: string;
+  border: string;
+  bgLight: string;
+  bgDark: string;
+}
+
+export const THEME_OPTIONS: { value: AppTheme; labelEn: string; labelFa: string; colors: ThemeColors; preview: string[] }[] = [
+  {
+    value: 'violet',
+    labelEn: 'Violet',
+    labelFa: 'بنفش',
+    colors: {
+      primary: '#8b5cf6',
+      primaryHover: '#7c3aed',
+      secondary: '#a78bfa',
+      accent: '#c084fc',
+      gradientFrom: '#f5f3ff',
+      gradientVia: '#ede9fe',
+      gradientTo: '#ddd6fe',
+      shadow: 'rgba(139, 92, 246, 0.25)',
+      text: '#5b21b6',
+      textMuted: '#6d28d9',
+      border: '#c4b5fd',
+      bgLight: '#faf5ff',
+      bgDark: '#4c1d95',
+    },
+    preview: ['#8b5cf6', '#a78bfa', '#c084fc', '#ddd6fe'],
+  },
+  {
+    value: 'ocean',
+    labelEn: 'Ocean',
+    labelFa: 'اقیانوس',
+    colors: {
+      primary: '#0891b2',
+      primaryHover: '#0e7490',
+      secondary: '#22d3ee',
+      accent: '#06b6d4',
+      gradientFrom: '#ecfeff',
+      gradientVia: '#cffafe',
+      gradientTo: '#a5f3fc',
+      shadow: 'rgba(8, 145, 178, 0.25)',
+      text: '#155e75',
+      textMuted: '#0e7490',
+      border: '#67e8f9',
+      bgLight: '#f0fdfa',
+      bgDark: '#164e63',
+    },
+    preview: ['#0891b2', '#22d3ee', '#06b6d4', '#a5f3fc'],
+  },
+  {
+    value: 'forest',
+    labelEn: 'Forest',
+    labelFa: 'جنگل',
+    colors: {
+      primary: '#059669',
+      primaryHover: '#047857',
+      secondary: '#34d399',
+      accent: '#10b981',
+      gradientFrom: '#ecfdf5',
+      gradientVia: '#d1fae5',
+      gradientTo: '#a7f3d0',
+      shadow: 'rgba(5, 150, 105, 0.25)',
+      text: '#065f46',
+      textMuted: '#047857',
+      border: '#6ee7b7',
+      bgLight: '#f0fdf4',
+      bgDark: '#064e3b',
+    },
+    preview: ['#059669', '#34d399', '#10b981', '#a7f3d0'],
+  },
+  {
+    value: 'sunset',
+    labelEn: 'Sunset',
+    labelFa: 'غروب',
+    colors: {
+      primary: '#ea580c',
+      primaryHover: '#c2410c',
+      secondary: '#fb923c',
+      accent: '#f97316',
+      gradientFrom: '#fff7ed',
+      gradientVia: '#ffedd5',
+      gradientTo: '#fed7aa',
+      shadow: 'rgba(234, 88, 12, 0.25)',
+      text: '#9a3412',
+      textMuted: '#c2410c',
+      border: '#fdba74',
+      bgLight: '#fffbeb',
+      bgDark: '#7c2d12',
+    },
+    preview: ['#ea580c', '#fb923c', '#f97316', '#fed7aa'],
+  },
+  {
+    value: 'rose',
+    labelEn: 'Rose',
+    labelFa: 'گل سرخ',
+    colors: {
+      primary: '#e11d48',
+      primaryHover: '#be123c',
+      secondary: '#fb7185',
+      accent: '#f43f5e',
+      gradientFrom: '#fff1f2',
+      gradientVia: '#ffe4e6',
+      gradientTo: '#fecdd3',
+      shadow: 'rgba(225, 29, 72, 0.25)',
+      text: '#9f1239',
+      textMuted: '#be123c',
+      border: '#fda4af',
+      bgLight: '#fef2f2',
+      bgDark: '#881337',
+    },
+    preview: ['#e11d48', '#fb7185', '#f43f5e', '#fecdd3'],
+  },
+  {
+    value: 'midnight',
+    labelEn: 'Midnight',
+    labelFa: 'نیمه‌شب',
+    colors: {
+      primary: '#4f46e5',
+      primaryHover: '#4338ca',
+      secondary: '#818cf8',
+      accent: '#6366f1',
+      gradientFrom: '#eef2ff',
+      gradientVia: '#e0e7ff',
+      gradientTo: '#c7d2fe',
+      shadow: 'rgba(79, 70, 229, 0.25)',
+      text: '#3730a3',
+      textMuted: '#4338ca',
+      border: '#a5b4fc',
+      bgLight: '#f5f3ff',
+      bgDark: '#312e81',
+    },
+    preview: ['#4f46e5', '#818cf8', '#6366f1', '#c7d2fe'],
+  },
+  {
+    value: 'emerald',
+    labelEn: 'Emerald',
+    labelFa: 'زمرد',
+    colors: {
+      primary: '#0d9488',
+      primaryHover: '#0f766e',
+      secondary: '#2dd4bf',
+      accent: '#14b8a6',
+      gradientFrom: '#f0fdfa',
+      gradientVia: '#ccfbf1',
+      gradientTo: '#99f6e4',
+      shadow: 'rgba(13, 148, 136, 0.25)',
+      text: '#115e59',
+      textMuted: '#0f766e',
+      border: '#5eead4',
+      bgLight: '#f0fdfa',
+      bgDark: '#134e4a',
+    },
+    preview: ['#0d9488', '#2dd4bf', '#14b8a6', '#99f6e4'],
+  },
+  {
+    value: 'coral',
+    labelEn: 'Coral',
+    labelFa: 'مرجانی',
+    colors: {
+      primary: '#db2777',
+      primaryHover: '#be185d',
+      secondary: '#f472b6',
+      accent: '#ec4899',
+      gradientFrom: '#fdf2f8',
+      gradientVia: '#fce7f3',
+      gradientTo: '#fbcfe8',
+      shadow: 'rgba(219, 39, 119, 0.25)',
+      text: '#9d174d',
+      textMuted: '#be185d',
+      border: '#f9a8d4',
+      bgLight: '#fdf4ff',
+      bgDark: '#831843',
+    },
+    preview: ['#db2777', '#f472b6', '#ec4899', '#fbcfe8'],
+  },
+];
+
 export const FONT_OPTIONS: { value: AppFont; labelEn: string; labelFa: string; family: string }[] = [
   { value: 'system', labelEn: 'System', labelFa: 'سیستم', family: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
   { value: 'vazirmatn', labelEn: 'Vazirmatn', labelFa: 'وزیرمتن', family: "'Vazirmatn', 'Tahoma', sans-serif" },
@@ -167,6 +356,7 @@ export interface Translations {
   // Settings
   settingsTitle: string;
   fontSize: string;
+  colorTheme: string;
   theme: string;
   light: string;
   dark: string;
@@ -250,6 +440,7 @@ export const translations: Record<AppLanguage, Translations> = {
     edit: 'Edit',
     settingsTitle: 'Settings',
     fontSize: 'Font Size',
+    colorTheme: 'Color Theme',
     theme: 'Theme',
     light: 'Light',
     dark: 'Dark',
@@ -331,6 +522,7 @@ export const translations: Record<AppLanguage, Translations> = {
     edit: 'ویرایش',
     settingsTitle: 'تنظیمات',
     fontSize: 'اندازه فونت',
+    colorTheme: 'رنگ تم',
     theme: 'تم',
     light: 'روشن',
     dark: 'تیره',

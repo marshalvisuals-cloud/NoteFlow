@@ -11,8 +11,11 @@ const AppContent: React.FC = () => {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-all duration-300 ${isRTL ? 'rtl' : 'ltr'}`}
+      className={`min-h-screen transition-all duration-500 ${isRTL ? 'rtl' : 'ltr'}`}
       dir={isRTL ? 'rtl' : 'ltr'}
+      style={{
+        background: `linear-gradient(to bottom right, var(--color-gradient-from), var(--color-gradient-via), var(--color-gradient-to))`,
+      }}
     >
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/50 dark:border-slate-700/50">
@@ -21,12 +24,23 @@ const AppContent: React.FC = () => {
             {/* Logo + Language Toggle */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/25">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300"
+                  style={{
+                    background: `linear-gradient(to bottom right, var(--color-primary), var(--color-primary-hover))`,
+                    boxShadow: `0 10px 15px -3px var(--color-shadow)`,
+                  }}
+                >
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent font-display">
+                <h1
+                  className="text-xl font-bold bg-clip-text text-transparent font-display"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, var(--color-primary), var(--color-primary-hover))`,
+                  }}
+                >
                   {t.appName}
                 </h1>
               </div>
@@ -35,15 +49,25 @@ const AppContent: React.FC = () => {
               {viewMode === 'dashboard' && (
                 <button
                   onClick={() => setAppLanguage(appLanguage === 'en' ? 'fa' : 'en')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-violet-100 dark:hover:bg-violet-900/30 border border-slate-200 dark:border-slate-700 transition-all duration-200 group"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-200 group"
+                  style={{
+                    backgroundColor: 'var(--color-bg-light)',
+                    borderColor: 'var(--color-border)',
+                  }}
                   title={t.language}
                 >
                   <span className="text-sm">🌐</span>
-                  <span className={`text-xs font-semibold transition-colors ${appLanguage === 'fa' ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 dark:text-slate-400 group-hover:text-violet-600'}`}>
+                  <span
+                    className="text-xs font-semibold transition-colors"
+                    style={{ color: appLanguage === 'fa' ? 'var(--color-primary)' : undefined }}
+                  >
                     FA
                   </span>
                   <span className="text-slate-300 dark:text-slate-600">|</span>
-                  <span className={`text-xs font-semibold transition-colors ${appLanguage === 'en' ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 dark:text-slate-400 group-hover:text-violet-600'}`}>
+                  <span
+                    className="text-xs font-semibold transition-colors"
+                    style={{ color: appLanguage === 'en' ? 'var(--color-primary)' : undefined }}
+                  >
                     EN
                   </span>
                 </button>
@@ -62,7 +86,12 @@ const AppContent: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </button>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold shadow-md">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md transition-all duration-300"
+                style={{
+                  background: `linear-gradient(to bottom right, var(--color-secondary), var(--color-primary))`,
+                }}
+              >
                 {appLanguage === 'fa' ? 'ن' : 'N'}
               </div>
             </div>

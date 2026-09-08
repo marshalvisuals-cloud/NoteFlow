@@ -17,6 +17,147 @@ html.size-xlarge {
   font-size: 20px;
 }
 
+/* Theme Variables */
+.theme-violet {
+  --color-primary: #8b5cf6;
+  --color-primary-hover: #7c3aed;
+  --color-secondary: #a78bfa;
+  --color-accent: #c084fc;
+  --color-gradient-from: #f5f3ff;
+  --color-gradient-via: #ede9fe;
+  --color-gradient-to: #ddd6fe;
+  --color-shadow: rgba(139, 92, 246, 0.25);
+  --color-text: #5b21b6;
+  --color-text-muted: #6d28d9;
+  --color-border: #c4b5fd;
+  --color-bg-light: #faf5ff;
+  --color-bg-dark: #4c1d95;
+}
+
+.theme-ocean {
+  --color-primary: #0891b2;
+  --color-primary-hover: #0e7490;
+  --color-secondary: #22d3ee;
+  --color-accent: #06b6d4;
+  --color-gradient-from: #ecfeff;
+  --color-gradient-via: #cffafe;
+  --color-gradient-to: #a5f3fc;
+  --color-shadow: rgba(8, 145, 178, 0.25);
+  --color-text: #155e75;
+  --color-text-muted: #0e7490;
+  --color-border: #67e8f9;
+  --color-bg-light: #f0fdfa;
+  --color-bg-dark: #164e63;
+}
+
+.theme-forest {
+  --color-primary: #059669;
+  --color-primary-hover: #047857;
+  --color-secondary: #34d399;
+  --color-accent: #10b981;
+  --color-gradient-from: #ecfdf5;
+  --color-gradient-via: #d1fae5;
+  --color-gradient-to: #a7f3d0;
+  --color-shadow: rgba(5, 150, 105, 0.25);
+  --color-text: #065f46;
+  --color-text-muted: #047857;
+  --color-border: #6ee7b7;
+  --color-bg-light: #f0fdf4;
+  --color-bg-dark: #064e3b;
+}
+
+.theme-sunset {
+  --color-primary: #ea580c;
+  --color-primary-hover: #c2410c;
+  --color-secondary: #fb923c;
+  --color-accent: #f97316;
+  --color-gradient-from: #fff7ed;
+  --color-gradient-via: #ffedd5;
+  --color-gradient-to: #fed7aa;
+  --color-shadow: rgba(234, 88, 12, 0.25);
+  --color-text: #9a3412;
+  --color-text-muted: #c2410c;
+  --color-border: #fdba74;
+  --color-bg-light: #fffbeb;
+  --color-bg-dark: #7c2d12;
+}
+
+.theme-rose {
+  --color-primary: #e11d48;
+  --color-primary-hover: #be123c;
+  --color-secondary: #fb7185;
+  --color-accent: #f43f5e;
+  --color-gradient-from: #fff1f2;
+  --color-gradient-via: #ffe4e6;
+  --color-gradient-to: #fecdd3;
+  --color-shadow: rgba(225, 29, 72, 0.25);
+  --color-text: #9f1239;
+  --color-text-muted: #be123c;
+  --color-border: #fda4af;
+  --color-bg-light: #fef2f2;
+  --color-bg-dark: #881337;
+}
+
+.theme-midnight {
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-secondary: #818cf8;
+  --color-accent: #6366f1;
+  --color-gradient-from: #eef2ff;
+  --color-gradient-via: #e0e7ff;
+  --color-gradient-to: #c7d2fe;
+  --color-shadow: rgba(79, 70, 229, 0.25);
+  --color-text: #3730a3;
+  --color-text-muted: #4338ca;
+  --color-border: #a5b4fc;
+  --color-bg-light: #f5f3ff;
+  --color-bg-dark: #312e81;
+}
+
+.theme-emerald {
+  --color-primary: #0d9488;
+  --color-primary-hover: #0f766e;
+  --color-secondary: #2dd4bf;
+  --color-accent: #14b8a6;
+  --color-gradient-from: #f0fdfa;
+  --color-gradient-via: #ccfbf1;
+  --color-gradient-to: #99f6e4;
+  --color-shadow: rgba(13, 148, 136, 0.25);
+  --color-text: #115e59;
+  --color-text-muted: #0f766e;
+  --color-border: #5eead4;
+  --color-bg-light: #f0fdfa;
+  --color-bg-dark: #134e4a;
+}
+
+.theme-coral {
+  --color-primary: #db2777;
+  --color-primary-hover: #be185d;
+  --color-secondary: #f472b6;
+  --color-accent: #ec4899;
+  --color-gradient-from: #fdf2f8;
+  --color-gradient-via: #fce7f3;
+  --color-gradient-to: #fbcfe8;
+  --color-shadow: rgba(219, 39, 119, 0.25);
+  --color-text: #9d174d;
+  --color-text-muted: #be185d;
+  --color-border: #f9a8d4;
+  --color-bg-light: #fdf4ff;
+  --color-bg-dark: #831843;
+}
+
+/* Apply theme variables to common elements */
+.theme-violet .bg-gradient-to-br,
+.theme-ocean .bg-gradient-to-br,
+.theme-forest .bg-gradient-to-br,
+.theme-sunset .bg-gradient-to-br,
+.theme-rose .bg-gradient-to-br,
+.theme-midnight .bg-gradient-to-br,
+.theme-emerald .bg-gradient-to-br,
+.theme-coral .bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--color-gradient-from), var(--color-gradient-via), var(--color-gradient-to));
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

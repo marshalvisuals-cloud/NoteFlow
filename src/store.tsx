@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
-import { Note, ViewMode, AppLanguage, AppFont, translations, Translations, Tag, UISize } from './types';
+import { Note, ViewMode, AppLanguage, AppFont, translations, Translations, Tag, UISize, AppTheme } from './types';
 import { VoiceRecording, InlineImage } from './types';
 
 interface AppContextType {
@@ -14,6 +14,8 @@ interface AppContextType {
   tags: Tag[];
   uiSize: UISize;
   setUISize: (size: UISize) => void;
+  theme: AppTheme;
+  setTheme: (theme: AppTheme) => void;
   setViewMode: (mode: ViewMode) => void;
   setSearchQuery: (query: string) => void;
   setSelectedTag: (tag: string) => void;
@@ -208,6 +210,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [selectedTag, setSelectedTag] = useState('all');
   const [appLanguage, setAppLanguageState] = useState<AppLanguage>('fa');
   const [uiSize, setUISizeState] = useState<UISize>('medium');
+  const [theme, setThemeState] = useState<AppTheme>('violet');
   const [tags, setTags] = useState<Tag[]>([
     { id: '1', name: 'کاری', color: '#a78bfa' },
     { id: '2', name: 'شخصی', color: '#fbbf24' },
@@ -226,8 +229,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     root.classList.add(`size-${uiSize}`);
   }, [uiSize]);
 
+  // Apply theme to root element
+  useEffect(() => {
+    const root = document.documentElement;
+    const allThemes = ['theme-violet', 'theme-ocean', 'theme-forest', 'theme-sunset', 'theme-rose', 'theme-midnight', 'theme-emerald', 'theme-coral'];
+    allThemes.forEach(t => root.classList.remove(t));
+    root.classList.add(`theme-${theme}`);
+  }, [theme]);
+
   const setUISize = useCallback((size: UISize) => {
     setUISizeState(size);
+  }, []);
+
+  const setTheme = useCallback((newTheme: AppTheme) => {
+    setThemeState(newTheme);
   }, []);
 
   const setAppLanguage = useCallback((lang: AppLanguage) => {
@@ -387,6 +402,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       tags,
       uiSize,
       setUISize,
+      theme,
+      setTheme,
       setViewMode,
       setSearchQuery,
       setSelectedTag,

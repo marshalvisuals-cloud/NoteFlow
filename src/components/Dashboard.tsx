@@ -159,7 +159,11 @@ const Dashboard: React.FC = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t.searchPlaceholder}
-          className="w-full ps-12 pe-4 py-3.5 rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 backdrop-blur-sm transition-all font-fontBody"
+          className="w-full ps-12 pe-4 py-3.5 rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 backdrop-blur-sm transition-all font-fontBody"
+          style={{
+            // @ts-ignore
+            '--tw-ring-color': 'var(--color-shadow)',
+          }}
           dir={isRTL ? 'rtl' : 'ltr'}
         />
       </div>
@@ -172,9 +176,13 @@ const Dashboard: React.FC = () => {
             onClick={() => setSelectedTag(tag.id)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 font-fontBody ${
               selectedTag === tag.id
-                ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/25'
-                : 'bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-violet-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                ? 'text-white shadow-lg'
+                : 'bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
             }`}
+            style={selectedTag === tag.id ? {
+              backgroundColor: 'var(--color-primary)',
+              boxShadow: '0 10px 15px -3px var(--color-shadow)',
+            } : undefined}
           >
             <span>{tag.icon}</span>
             <span>{tag.label}</span>
@@ -235,7 +243,11 @@ const Dashboard: React.FC = () => {
       {/* FAB - New Note */}
       <button
         onClick={createNote}
-        className="fixed bottom-8 end-8 w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-xl shadow-violet-500/30 flex items-center justify-center hover:scale-110 transition-transform duration-200 z-40"
+        className="fixed bottom-8 end-8 w-14 h-14 rounded-full text-white flex items-center justify-center hover:scale-110 transition-all duration-200 z-40"
+        style={{
+          background: 'linear-gradient(to bottom right, var(--color-primary), var(--color-primary-hover))',
+          boxShadow: '0 20px 25px -5px var(--color-shadow), 0 10px 10px -5px var(--color-shadow)',
+        }}
         title={t.newNote}
       >
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">

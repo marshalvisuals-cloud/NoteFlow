@@ -89,7 +89,11 @@ export default function TagManager({ onClose }: TagManagerProps) {
             <button
               onClick={handleAddTag}
               disabled={!newTagName.trim()}
-              className="w-full px-4 py-2.5 rounded-lg bg-violet-500 text-white font-medium hover:bg-violet-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-vazirmatn"
+              className="w-full px-4 py-2.5 rounded-lg text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-vazirmatn"
+              style={{
+                background: 'linear-gradient(to right, var(--color-primary), var(--color-primary-hover))',
+                boxShadow: '0 4px 6px -1px var(--color-shadow)',
+              }}
             >
               {t.addTag}
             </button>
