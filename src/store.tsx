@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { Note, ViewMode, AppLanguage, AppFont, translations, Translations, Tag } from './types';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import { Note, ViewMode, AppLanguage, AppFont, translations, Translations, Tag, UISize } from './types';
 import { VoiceRecording, InlineImage } from './types';
 
 interface AppContextType {
@@ -12,6 +12,8 @@ interface AppContextType {
   isRTL: boolean;
   t: Translations;
   tags: Tag[];
+  uiSize: UISize;
+  setUISize: (size: UISize) => void;
   setViewMode: (mode: ViewMode) => void;
   setSearchQuery: (query: string) => void;
   setSelectedTag: (tag: string) => void;
@@ -205,6 +207,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState('all');
   const [appLanguage, setAppLanguageState] = useState<AppLanguage>('fa');
+  const [uiSize, setUISizeState] = useState<UISize>('medium');
   const [tags, setTags] = useState<Tag[]>([
     { id: '1', name: 'کاری', color: '#a78bfa' },
     { id: '2', name: 'شخصی', color: '#fbbf24' },
@@ -215,6 +218,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const t = translations[appLanguage];
   const isRTL = appLanguage === 'fa';
+
+  // Apply UI size to root element
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('size-small', 'size-medium', 'size-large', 'size-xlarge');
+    root.classList.add(`size-${uiSize}`);
+  }, [uiSize]);
+
+  const setUISize = useCallback((size: UISize) => {
+    setUISizeState(size);
+  }, []);
 
   const setAppLanguage = useCallback((lang: AppLanguage) => {
     setAppLanguageState(lang);
@@ -371,6 +385,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       isRTL,
       t,
       tags,
+      uiSize,
+      setUISize,
       setViewMode,
       setSearchQuery,
       setSelectedTag,

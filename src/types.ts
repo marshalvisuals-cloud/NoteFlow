@@ -55,6 +55,15 @@ export type AppLanguage = 'en' | 'fa';
 
 export type AppFont = 'system' | 'vazirmatn' | 'nazanin' | 'calibri';
 
+export type UISize = 'small' | 'medium' | 'large' | 'xlarge';
+
+export const UI_SIZE_OPTIONS: { value: UISize; labelEn: string; labelFa: string; scale: number }[] = [
+  { value: 'small', labelEn: 'Small', labelFa: 'کوچک', scale: 0.875 },
+  { value: 'medium', labelEn: 'Medium', labelFa: 'متوسط', scale: 1 },
+  { value: 'large', labelEn: 'Large', labelFa: 'بزرگ', scale: 1.125 },
+  { value: 'xlarge', labelEn: 'Extra Large', labelFa: 'خیلی بزرگ', scale: 1.25 },
+];
+
 export const FONT_OPTIONS: { value: AppFont; labelEn: string; labelFa: string; family: string }[] = [
   { value: 'system', labelEn: 'System', labelFa: 'سیستم', family: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' },
   { value: 'vazirmatn', labelEn: 'Vazirmatn', labelFa: 'وزیرمتن', family: "'Vazirmatn', 'Tahoma', sans-serif" },
@@ -155,6 +164,13 @@ export interface Translations {
   confirmDeleteTag: string;
   save: string;
   edit: string;
+  // Settings
+  settingsTitle: string;
+  fontSize: string;
+  theme: string;
+  light: string;
+  dark: string;
+  appearance: string;
 }
 
 export const translations: Record<AppLanguage, Translations> = {
@@ -232,6 +248,12 @@ export const translations: Record<AppLanguage, Translations> = {
     confirmDeleteTag: 'Are you sure you want to delete this tag?',
     save: 'Save',
     edit: 'Edit',
+    settingsTitle: 'Settings',
+    fontSize: 'Font Size',
+    theme: 'Theme',
+    light: 'Light',
+    dark: 'Dark',
+    appearance: 'Appearance',
   },
   fa: {
     appName: 'نوت‌فلو',
@@ -307,6 +329,12 @@ export const translations: Record<AppLanguage, Translations> = {
     confirmDeleteTag: 'آیا از حذف این برچسب مطمئن هستید؟',
     save: 'ذخیره',
     edit: 'ویرایش',
+    settingsTitle: 'تنظیمات',
+    fontSize: 'اندازه فونت',
+    theme: 'تم',
+    light: 'روشن',
+    dark: 'تیره',
+    appearance: 'ظاهر',
   },
 };
 
